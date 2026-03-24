@@ -4055,8 +4055,14 @@ function appToDB(d){
 }
 
 async function sbSaveSinistre(d){
-  const{error}=await _sb.from('sinistres').upsert(appToDB(d),{onConflict:'archive'});
-  if(error){console.error('Supabase save error:',error);showNotif('❌ Erreur sauvegarde: '+error.message);return false;}
+  const row=appToDB(d);
+  const{error}=await _sb.from('sinistres').upsert(row,{onConflict:'archive'});
+  if(error){
+    console.error('Supabase save error détaillé:',JSON.stringify(error));
+    console.error('Row envoyé:',JSON.stringify(row));
+    showNotif('❌ Erreur: '+error.message);
+    return false;
+  }
   return true;
 }
 
