@@ -1388,6 +1388,877 @@ tr:hover td{background:#FAFAF9;}
 <!-- Input file statique — hors du DOM dynamique pour éviter les problèmes de sécurité navigateur -->
 <input type="file" id="file-input-static" style="display:none;position:fixed;top:-9999px" multiple onchange="handleFileInputMain(this)"/>
 
+
+
+
+
+
+
+</body>
+</html></head>YPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>QuincéSinistr — Suivi de sinistralité</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen open" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Quincé<span>Sinistr</span></div>
+    <div class="login-sub">Groupe Quincé — Gestion de sinistralité</div>
+    <label class="login-label">Adresse e-mail</label>
+    <input class="login-input" type="text" id="login-user" placeholder="Votre adresse e-mail" autocomplete="username"/>
+    <label class="login-label">Mot de passe</label>
+    <input class="login-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <div class="login-err" id="login-err">Identifiant ou mot de passe incorrect.</div>
+    <button class="login-btn" onclick="doLogin()">Se connecter</button>
+
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sb">
+  <div class="sb-logo">
+    <div class="sb-brand">Quincé<span>Sinistr</span></div>
+    <div class="sb-sub">Groupe Quincé — Sinistralité parc</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Analyse</div>
+    <div class="sb-item active" onclick="nav('dashboard',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
+      Tableau de bord
+    </div>
+    <div class="sb-section">Sinistres</div>
+    <div class="sb-item" onclick="nav('list',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3.5h10M2 7h10M2 10.5h7"/></svg>
+      Tous les sinistres
+    </div>
+    <div class="sb-item" onclick="navListFiltered('Flotte',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="5" width="12" height="6" rx="1.5"/><path d="M2 5V4a2 2 0 014 0v1"/><circle cx="4" cy="11" r="1.2"/><circle cx="10" cy="11" r="1.2"/></svg>
+      Sinistres Flotte
+    </div>
+    <div class="sb-item" onclick="navListFiltered('Marchandise',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h10l-1 8H3L2 3z"/><path d="M5 3V2a2 2 0 014 0v1"/></svg>
+      Sinistres Marchandise
+    </div>
+    <div class="sb-item" onclick="nav('nouveau',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><path d="M7 4.5v5M4.5 7h5"/></svg>
+      Nouveau sinistre
+    </div>
+    <div class="sb-section">Suivi</div>
+    <div class="sb-item" onclick="nav('prescriptions',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><path d="M7 4v3.5l2 1"/></svg>
+      Prescriptions
+    </div>
+    <div class="sb-item" onclick="nav('assurance',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 1.5L2 4v4c0 2.5 2.2 4.5 5 5 2.8-.5 5-2.5 5-5V4L7 1.5z"/></svg>
+      Suivi assurance
+    </div>
+    <div class="sb-item" onclick="nav('relances',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h10M2 7h10M2 11h6"/><circle cx="11" cy="11" r="2.5"/><path d="M11 9.5v1.5l1 1"/></svg>
+      Relances
+      <span id="sb-relances-badge" style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:var(--red);color:#fff;display:none;"></span>
+    </div>
+    <div class="sb-item" onclick="nav('compta',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="2" width="11" height="10" rx="1.5"/><path d="M1.5 5h11M5 5v7M5 2v3"/></svg>
+      Comptabilité
+    </div>
+    <div class="sb-item" onclick="nav('audit',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="11" rx="1"/><path d="M4.5 5h5M4.5 7.5h3.5"/></svg>
+      Journal d'audit
+    </div>
+    <div class="sb-item" onclick="nav('heatmap',this)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="3" height="3" rx=".5"/><rect x="5.5" y="1" width="3" height="3" rx=".5"/><rect x="10" y="1" width="3" height="3" rx=".5"/><rect x="1" y="5.5" width="3" height="3" rx=".5"/><rect x="5.5" y="5.5" width="3" height="3" rx=".5"/><rect x="10" y="5.5" width="3" height="3" rx=".5"/><rect x="1" y="10" width="3" height="3" rx=".5"/><rect x="5.5" y="10" width="3" height="3" rx=".5"/><rect x="10" y="10" width="3" height="3" rx=".5"/></svg>
+      Suivi mensuel
+    </div>
+  </nav>
+  <div class="sb-foot">
+    <div class="user">
+      <div class="user-av" style="background:var(--accent);color:#fff">MD</div>
+      <div>
+        <div class="user-name">Marie Dupont</div>
+        <div class="user-role">Gestionnaire sinistres</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-ttl" id="page-ttl">Tableau de bord</div>
+    <div class="topbar-r">
+      <button class="btn" onclick="exportCSV()">↓ Exporter CSV</button>
+      <button class="btn btn-primary" onclick="nav('nouveau',null)">+ Nouveau sinistre</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="sec active" id="sec-dashboard">
+      <!-- Barre de filtres période -->
+      <div class="dash-filter-bar">
+        <label>📅 Période</label>
+        <select class="dash-filter-sel" id="df-year" onchange="renderDash()">
+          <option value="">Toutes les années</option>
+        </select>
+        <select class="dash-filter-sel" id="df-month" onchange="renderDash()">
+          <option value="">Tous les mois</option>
+          <option value="1">Janvier</option><option value="2">Février</option>
+          <option value="3">Mars</option><option value="4">Avril</option>
+          <option value="5">Mai</option><option value="6">Juin</option>
+          <option value="7">Juillet</option><option value="8">Août</option>
+          <option value="9">Septembre</option><option value="10">Octobre</option>
+          <option value="11">Novembre</option><option value="12">Décembre</option>
+        </select>
+        <div class="dash-filter-sep"></div>
+        <label>Entité</label>
+        <select class="dash-filter-sel" id="df-entite" onchange="renderDash()">
+          <option value="">Toutes</option>
+          <option value="QUINCE">QUINCÉ</option>
+          <option value="DAMOIS">DAMOIS</option>
+          <option value="QUESNEL">QUESNEL</option>
+        </select>
+        <label>Type</label>
+        <select class="dash-filter-sel" id="df-type" onchange="renderDash()">
+          <option value="">Tous</option>
+          <option value="Flotte">🚛 Flotte</option>
+          <option value="Marchandise">📦 Marchandise</option>
+        </select>
+        <div class="dash-filter-sep"></div>
+        <label>Conducteur</label>
+        <select class="dash-filter-sel" id="df-cond" onchange="renderDash()">
+          <option value="">Tous</option>
+        </select>
+        <label>Affréteur</label>
+        <select class="dash-filter-sel" id="df-aff" onchange="renderDash()">
+          <option value="">Tous</option>
+          <option value="CAT">CAT</option>
+          <option value="CEVA">CEVA</option>
+        </select>
+        <button class="dash-filter-reset" onclick="dashResetFilters()">✕ Réinitialiser</button>
+        <span class="dash-period-label" id="df-label"></span>
+      </div>
+      <!-- KPI comptage -->
+      <div class="metrics" id="dash-metrics"></div>
+      <!-- KPI financiers -->
+      <div class="metrics-cost" id="dash-metrics-cost"></div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-hd"><div class="card-ttl">Sinistres par conducteur (Top 10)</div></div>
+          <div class="card-bd" id="ch-conducteur"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-ttl">Répartition par état</div></div>
+          <div class="card-bd">
+            <div class="donut-wrap">
+              <canvas id="donut" width="110" height="110" style="flex-shrink:0"></canvas>
+              <div class="leg" id="donut-leg"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-hd"><div class="card-ttl">Sinistres par affréteur</div></div>
+          <div class="card-bd" id="ch-affreteur"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-ttl">Chiffrage par conducteur (Top 8) — €</div></div>
+          <div class="card-bd" id="ch-montant"></div>
+        </div>
+      </div>
+      <div class="card mb14">
+        <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div class="card-ttl" id="dash-list-title">Sinistres de la période</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="badge" id="alert-count" style="background:var(--accent-bg);color:var(--accent-t);font-size:10px;"></span>
+            <button class="btn btn-sm btn-primary" onclick="dashGoToList()">Voir dans la liste →</button>
+          </div>
+        </div>
+        <div class="tbl-wrap" style="max-height:380px;overflow-y:auto;">
+          <table>
+            <thead><tr>
+              <th class="sortable sort-desc" id="dsh-date" onclick="dashSortBy('date',this)">Date</th>
+              <th class="sortable" id="dsh-archive" onclick="dashSortBy('archive',this)">Archive</th>
+              <th>Entité</th>
+              <th>Type</th>
+              <th class="sortable" id="dsh-conducteur" onclick="dashSortBy('conducteur',this)">Conducteur</th>
+              <th class="sortable" id="dsh-affreteur" onclick="dashSortBy('affreteur',this)">Affréteur</th>
+              <th class="sortable" id="dsh-chiffrage" onclick="dashSortBy('chiffrage',this)">Chiffrage</th>
+              <th class="sortable" id="dsh-coutnet" onclick="dashSortBy('coutnet',this)">Coût net</th>
+              <th class="sortable" id="dsh-rec" onclick="dashSortBy('rec',this)">Récupéré</th>
+              <th>NREF</th>
+              <th>Contestation</th>
+              <th class="sortable" id="dsh-presc" onclick="dashSortBy('presc',this)">Prescription</th>
+              <th class="sortable" id="dsh-etat" onclick="dashSortBy('etat',this)">État</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="alert-tbody"></tbody>
+          </table>
+        </div>
+        <div class="sum-row" id="dash-sum-row"></div>
+      </div>
+    </div>
+
+    <!-- ===== LIST ===== -->
+    <div class="sec" id="sec-list">
+      <div class="filters">
+        <div class="search-wrap"><input type="text" placeholder="🔍 Rechercher conducteur, immat, NREF, archive, affréteur…" oninput="applyFilters();" id="f-search"/></div>
+        <select onchange="applyFilters()" id="f-entite">
+          <option value="">Toutes entités</option>
+          <option value="QUINCE">🟠 QUINCÉ</option>
+          <option value="DAMOIS">🟢 DAMOIS</option>
+          <option value="QUESNEL">🔵 QUESNEL</option>
+        </select>
+        <select onchange="applyFilters()" id="f-type">
+          <option value="">Tous types</option>
+          <option value="Flotte">🚛 Flotte</option>
+          <option value="Marchandise">📦 Marchandise</option>
+        </select>
+        <select onchange="applyFilters()" id="f-etat">
+          <option value="">Tous états</option>
+          <option value="en-cours">En cours</option>
+          <option value="Terminé">Terminé</option>
+        </select>
+        <select onchange="applyFilters()" id="f-affreteur">
+          <option value="">Tous affréteurs</option>
+          <option value="CAT">CAT</option>
+          <option value="CEVA">CEVA</option>
+        </select>
+        <select onchange="applyFilters()" id="f-conducteur-filter">
+          <option value="">Tous conducteurs</option>
+        </select>
+        <select onchange="applyFilters()" id="f-contest">
+          <option value="">Tous</option>
+          <option value="oui">Contestation</option>
+          <option value="non">Sans contestation</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-hd">
+          <div class="card-ttl" id="list-count">— sinistres</div>
+          <button class="btn btn-primary btn-sm" onclick="nav('nouveau',null)">+ Ajouter</button>
+        </div>
+        <div class="tbl-wrap" style="max-height:calc(100vh - 260px);overflow-y:auto;">
+          <table>
+            <thead><tr>
+              <th class="sortable sort-desc" id="sh-date" onclick="sortBy('date',this)">Date</th>
+              <th class="sortable" id="sh-archive" onclick="sortBy('archive',this)">N° Archive</th>
+              <th class="sortable" id="sh-entite" onclick="sortBy('entite',this)">Entité</th>
+              <th class="sortable" id="sh-type_sinistre" onclick="sortBy('type_sinistre',this)">Type</th>
+              <th class="sortable" id="sh-conducteur" onclick="sortBy('conducteur',this)">Conducteur</th>
+              <th>Immat.</th>
+              <th>Affréteur</th>
+              <th class="sortable" id="sh-chiffrage" onclick="sortBy('chiffrage',this)">Chiffrage</th>
+              <th class="sortable" id="sh-franchise" onclick="sortBy('franchise',this)">Franchise</th>
+              <th>Factures</th>
+              <th class="sortable" id="sh-rbt" onclick="sortBy('rbt',this)">Rbt assurance</th>
+              <th>NREF</th>
+              <th>Contestation</th>
+              <th class="sortable" id="sh-etat" onclick="sortBy('etat',this)">État</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="list-tbody"></tbody>
+          </table>
+        </div>
+        <div class="sum-row" id="sum-row"></div>
+      </div>
+    </div>
+
+    <!-- ===== NOUVEAU ===== -->
+    <div class="sec" id="sec-nouveau">
+      <div class="fblock">
+        <div class="fblock-ttl">Identification du sinistre</div>
+        <div class="fg4">
+          <div class="fgrp"><label class="req">Date du sinistre</label><input type="date" id="nf-date" onchange="updatePresc()"/></div>
+          <div class="fgrp"><label>Prescription (calculée)</label><input type="text" id="nf-presc" readonly placeholder="Auto" style="background:var(--surface2)"/></div>
+          <div class="fgrp"><label>N° Archive</label><input type="text" id="nf-archive" placeholder="240XXX / 25XXX"/></div>
+          <div class="fgrp"><label class="req">Entité</label>
+            <select id="nf-entite">
+              <option value="QUINCE">🟠 QUINCÉ</option>
+              <option value="DAMOIS">🟢 DAMOIS</option>
+              <option value="QUESNEL">🔵 QUESNEL</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
+          <div class="fgrp" style="min-width:160px;">
+            <label class="req">Type de sinistre</label>
+            <select id="nf-type">
+              <option value="Flotte">🚛 Flotte (véhicule)</option>
+              <option value="Marchandise">📦 Marchandise</option>
+            </select>
+          </div>
+          <div class="fgrp" style="min-width:160px;">
+            <label class="req">État</label>
+            <select id="nf-etat">
+              <option value="en-cours">En cours</option>
+              <option value="Terminé">Terminé</option>
+            </select>
+          </div>
+          <div class="fgrp" style="min-width:140px;">
+            <label>Montant franchise (€)</label>
+            <input type="number" id="nf-franchise" placeholder="0.00" step="0.01"/>
+          </div>
+        </div>
+        <div id="presc-msg" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="fblock">
+        <div class="fblock-ttl">Véhicule & conducteur</div>
+        <div class="fg4">
+          <div class="fgrp"><label class="req">Conducteur</label>
+            <input type="text" id="nf-conducteur" list="conducteurs-list" placeholder="Sélectionner ou saisir un nom…" autocomplete="off"/>
+            <datalist id="conducteurs-list"></datalist>
+          </div>
+          <div class="fgrp"><label>Immatriculation</label><input type="text" id="nf-immat" placeholder="AB-123-CD"/></div>
+          <div class="fgrp"><label>N° de châssis (VIN)</label><input type="text" id="nf-chassis" placeholder="17 caractères"/></div>
+          <div class="fgrp"><label>Affréteur</label>
+            <select id="nf-affreteur">
+              <option value="">— Aucun —</option>
+              <option>CAT</option>
+              <option>CEVA</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="fblock">
+        <div class="fblock-ttl">Lettre de mise en cause & dossier</div>
+        <div class="fg4">
+          <div class="fgrp"><label>N° de Lettre MEC</label><input type="text" id="nf-ldv" placeholder="24XXXXX"/></div>
+          <div class="fgrp"><label>NREF assurance</label><input type="text" id="nf-nref" placeholder="A2XXX…"/></div>
+          <div class="fgrp"><label>N° dossier archive / lien</label><input type="text" id="nf-lien" placeholder="Lien dossier"/></div>
+          <div class="fgrp" style="align-items:flex-start;justify-content:flex-end;flex-direction:row;gap:16px;padding-top:20px;">
+            <label class="fcheck"><input type="checkbox" id="nf-contest"/> Contestation</label>
+            <label class="fcheck"><input type="checkbox" id="nf-expertise"/> Expertise</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="fblock">
+        <div class="fblock-ttl" style="display:flex;align-items:center;justify-content:space-between;">
+          Chiffrage & facturation
+          <span style="font-size:10px;color:var(--text3);font-weight:400;">Ajoutez autant de factures et d'avoirs que nécessaire</span>
+        </div>
+        <div class="fgrp" style="margin-bottom:10px;max-width:200px;">
+          <label>Chiffrage / Devis (€)</label>
+          <input type="number" id="nf-chiffrage" placeholder="0.00" step="0.01"/>
+        </div>
+        <div class="fact-list" id="nf-factures-list"></div>
+        <div class="fact-add-btn" onclick="addFactureRow('nf-factures-list')">+ Ajouter une facture / avoir</div>
+        <div class="fact-total" id="nf-fact-total" style="margin-top:8px;display:none;"></div>
+      </div>
+
+      <div class="fblock">
+        <div class="fblock-ttl">Revente marchandise & remboursement assurance</div>
+        <div class="fg4">
+          <div class="fgrp"><label>Montant revente marchandise (€)</label><input type="number" id="nf-revente" placeholder="0.00" step="0.01"/></div>
+          <div class="fgrp"><label>Date paiement revente</label><input type="date" id="nf-drevente"/></div>
+          <div class="fgrp"><label>Montant rbt assurance (€)</label><input type="number" id="nf-rbt" placeholder="0.00" step="0.01"/></div>
+          <div class="fgrp"><label>Date rbt assurance</label><input type="date" id="nf-drbt"/></div>
+        </div>
+      </div>
+
+      <div class="fblock">
+        <div class="fblock-ttl">Observations</div>
+        <div class="fgrp"><textarea id="nf-obs" rows="3" placeholder="Observations, transmissions, actions en cours…" style="resize:vertical;"></textarea></div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn" onclick="nav('list',null)">Annuler</button>
+        <button class="btn btn-primary" onclick="saveNew()">Enregistrer le sinistre</button>
+      </div>
+    </div>
+
+    <!-- ===== PRESCRIPTIONS ===== -->
+    <div class="sec" id="sec-prescriptions">
+      <div id="presc-alerts"></div>
+      <div class="card">
+        <div class="card-hd"><div class="card-ttl">Suivi des prescriptions (1 an à compter de la date du sinistre)</div></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Date sinistre</th><th>N° Archive</th><th>Conducteur</th><th>Date prescription</th>
+              <th>Jours restants</th><th>Chiffrage</th><th>NREF</th><th>État</th><th>Observations</th>
+            </tr></thead>
+            <tbody id="presc-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ASSURANCE ===== -->
+    <div class="sec" id="sec-assurance">
+      <div class="metrics" id="ins-metrics"></div>
+      <div class="g2 mb14">
+        <div class="card">
+          <div class="card-hd"><div class="card-ttl">Dossiers avec NREF assurance</div></div>
+          <div class="tbl-wrap" style="max-height:400px;overflow-y:auto;">
+            <table>
+              <thead><tr><th>Date</th><th>N° Archive</th><th>Conducteur</th><th>NREF</th><th>Chiffrage</th><th>Rbt assurance</th><th>Date rbt</th><th>État</th></tr></thead>
+              <tbody id="ins-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-ttl">Montants remboursés par NREF</div></div>
+          <div class="card-bd" id="ch-nref"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-ttl">Dossiers en attente de remboursement assurance</div></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>N° Archive</th><th>Conducteur</th><th>NREF</th><th>Chiffrage</th><th>Observations</th></tr></thead>
+            <tbody id="ins-pending-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== AUDIT ===== -->
+    <div class="sec" id="sec-audit">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('audit-log',this)">Journal des modifications</div>
+        <div class="tab" onclick="switchTab('audit-stats',this)">Statistiques utilisateurs</div>
+      </div>
+      <div id="audit-log">
+        <div class="g2">
+          <div class="card">
+            <div class="card-hd"><div class="card-ttl">Historique des actions</div></div>
+            <div class="card-bd" id="audit-entries" style="max-height:500px;overflow-y:auto;"></div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><div class="card-ttl">Modifications récentes</div></div>
+            <div class="tbl-wrap"><table>
+              <thead><tr><th>Archive</th><th>Champ</th><th>Par</th><th>Date</th></tr></thead>
+              <tbody id="audit-tbl"></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+      <div id="audit-stats" style="display:none;">
+        <div class="g2">
+          <div class="card">
+            <div class="card-hd"><div class="card-ttl">Actions par utilisateur</div></div>
+            <div class="card-bd" id="ch-users"></div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><div class="card-ttl">Récapitulatif</div></div>
+            <div class="tbl-wrap"><table>
+              <thead><tr><th>Utilisateur</th><th>Créations</th><th>Modifications</th><th>Total</th></tr></thead>
+              <tbody id="audit-recap"></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SUIVI MENSUEL (HEATMAP) ===== -->
+    <div class="sec" id="sec-heatmap">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Sinistres par conducteur et par mois</div>
+          <div style="font-size:11px;color:var(--text3);">Nombre de sinistres — cliquer sur une cellule pour voir les dossiers</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:11px;color:var(--text3);">Afficher :</div>
+          <select id="hm-year" onchange="renderHeatmap()" style="font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid var(--border2);border-radius:6px;padding:5px 9px;background:var(--surface);color:var(--text);outline:none;"></select>
+          <select id="hm-metric" onchange="renderHeatmap()" style="font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid var(--border2);border-radius:6px;padding:5px 9px;background:var(--surface);color:var(--text);outline:none;">
+            <option value="count">Nombre de sinistres</option>
+            <option value="chiffrage">Chiffrage total (€)</option>
+          </select>
+        </div>
+      </div>
+      <div class="card mb14">
+        <div class="card-bd" style="padding:12px;">
+          <div class="heatmap-wrap" id="heatmap-container"></div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-hd"><div class="card-ttl">Tendance mensuelle — tous conducteurs</div></div>
+          <div class="card-bd" id="hm-trend"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-ttl">Top conducteurs — année sélectionnée</div></div>
+          <div class="card-bd" id="hm-top"></div>
+        </div>
+      </div>
+      <!-- mini modal pour cellule -->
+      <div id="hm-popup" style="display:none;position:fixed;z-index:400;background:var(--surface);border:1px solid var(--border2);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:14px 16px;min-width:260px;max-width:340px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:12px;font-weight:600;" id="hm-popup-ttl"></div>
+          <button onclick="document.getElementById('hm-popup').style.display='none'" style="font-size:14px;background:none;border:none;cursor:pointer;color:var(--text3);line-height:1;">✕</button>
+        </div>
+        <div id="hm-popup-body"></div>
+      </div>
+    </div>
+
+    <!-- ===== COMPTABILITÉ / PROVISIONS ===== -->
+    <div class="sec" id="sec-compta">
+
+      <!-- Bandeau export -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);">Provisions comptables — sinistres en cours</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">Charges à provisionner : factures non reçues + remboursements assurance attendus</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="exportComptaCSV()">↓ Exporter provisions</button>
+        </div>
+      </div>
+      <div class="compta-date-filter">
+        <label>📅 Date de référence :</label>
+        <input type="date" id="compta-refdate" onchange="renderCompta()" title="Provisions à cette date — sinistres dont la facture n'était pas reçue à cette date"/>
+        <span style="color:var(--accent-t);font-size:11px;" id="compta-refdate-label"></span>
+        <select id="compta-entite-filter" onchange="renderCompta()" style="font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid var(--accent);border-radius:5px;padding:4px 8px;background:var(--surface);color:var(--text);outline:none;margin-left:8px;">
+          <option value="">Toutes entités</option>
+          <option value="QUINCE">🟠 QUINCÉ</option>
+          <option value="DAMOIS">🟢 DAMOIS</option>
+          <option value="QUESNEL">🔵 QUESNEL</option>
+        </select>
+      </div>
+
+      <!-- KPI provisions -->
+      <div class="metrics" id="compta-metrics" style="grid-template-columns:repeat(4,1fr);"></div>
+
+      <!-- Tabs -->
+      <div class="tabs" style="margin-bottom:14px;">
+        <div class="tab active" onclick="switchComptaTab('factures',this)">📄 Provisions factures non reçues</div>
+        <div class="tab" onclick="switchComptaTab('assurance',this)">🛡 Provisions remboursements assurance</div>
+        <div class="tab" onclick="switchComptaTab('recap',this)">📊 Récapitulatif par période</div>
+      </div>
+
+      <!-- TAB: Factures non reçues -->
+      <div id="ctab-factures">
+        <div class="card mb14">
+          <div class="card-hd">
+            <div class="card-ttl">Sinistres sans facture reçue — charge à provisionner</div>
+            <span id="compta-fact-badge" class="badge b-warn"></span>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th>Date sinistre</th><th>Archive</th><th>Entité</th><th>Type</th><th>Conducteur</th><th>Affréteur</th>
+                <th>Chiffrage / Devis</th><th>Fact. reçues (à la date)</th><th>Provision charges</th><th>Observations</th><th>État</th>
+              </tr></thead>
+              <tbody id="compta-fact-tbody"></tbody>
+              <tfoot><tr>
+                <td colspan="6" style="font-weight:700;font-size:11px;padding:8px 10px;background:var(--surface3);">TOTAL</td>
+                <td id="compta-fact-tot-chiff" style="font-weight:700;text-align:right;padding:8px 10px;background:var(--surface3);"></td>
+                <td id="compta-fact-tot-recu" style="font-weight:700;text-align:right;padding:8px 10px;background:var(--surface3);"></td>
+                <td id="compta-fact-tot-prov" style="font-weight:700;text-align:right;padding:8px 10px;background:#FEF0E7;color:var(--accent);"></td>
+                <td colspan="2" style="background:var(--surface3);"></td>
+              </tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Remboursements assurance attendus -->
+      <div id="ctab-assurance" style="display:none;">
+        <div class="card mb14">
+          <div class="card-hd">
+            <div class="card-ttl">Remboursements assurance attendus — produit à provisionner</div>
+            <span id="compta-rbt-badge" class="badge b-nref"></span>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th>Date sinistre</th><th>Archive</th><th>Entité</th><th>Type</th><th>Conducteur</th>
+                <th>NREF</th><th>Chiffrage</th><th>Franchise</th><th>Rbt à percevoir (chiff. − franchise)</th><th>État</th>
+              </tr></thead>
+              <tbody id="compta-rbt-tbody"></tbody>
+              <tfoot><tr>
+                <td colspan="6" style="font-weight:700;font-size:11px;padding:8px 10px;background:var(--surface3);">TOTAL</td>
+                <td id="compta-rbt-tot-chiff" style="font-weight:700;text-align:right;padding:8px 10px;background:var(--surface3);"></td>
+                <td id="compta-rbt-tot-rbt" style="font-weight:700;text-align:right;padding:8px 10px;background:var(--surface3);"></td>
+                <td id="compta-rbt-tot-fr" style="font-weight:700;text-align:right;padding:8px 10px;background:var(--surface3);"></td>
+                <td id="compta-rbt-tot-prov" style="font-weight:700;text-align:right;padding:8px 10px;background:#E6F4EC;color:var(--green);"></td>
+                <td style="background:var(--surface3);"></td>
+              </tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Récapitulatif par mois -->
+      <div id="ctab-recap" style="display:none;">
+        <div class="g2">
+          <div class="card">
+            <div class="card-hd"><div class="card-ttl">Provisions nettes par mois — année sélectionnée</div></div>
+            <div class="card-bd" id="compta-bar-fact"></div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><div class="card-ttl">Produits à recevoir par mois</div></div>
+            <div class="card-bd" id="compta-bar-rbt"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-ttl">Tableau récapitulatif mensuel des provisions</div></div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th>Mois</th><th>Nb sinistres</th>
+                <th>Chiffrage total</th><th>Factures reçues</th><th>Provision charges (factures manquantes)</th>
+                <th>Rbt attendus</th><th>Provision produits (rbt assurance)</th>
+                <th>Provision nette</th>
+              </tr></thead>
+              <tbody id="compta-recap-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /sec-compta -->
+
+    <!-- ===== RELANCES ===== -->
+    <div class="sec" id="sec-relances">
+
+      <!-- Stats bar -->
+      <div class="rl-stats" id="rl-stats"></div>
+
+      <!-- Filters + Add button -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;">
+        <div class="relance-filters">
+          <select id="rl-f-statut" onchange="renderRelances()">
+            <option value="">Tous les statuts</option>
+            <option value="À faire">À faire</option>
+            <option value="En cours">En cours</option>
+            <option value="Terminé">Terminé</option>
+            <option value="En retard">En retard</option>
+          </select>
+          <select id="rl-f-type" onchange="renderRelances()">
+            <option value="">Tous types</option>
+            <option value="Facture">📄 Relance facture</option>
+            <option value="Assurance">🛡 Relance assurance</option>
+            <option value="CAT">🔧 Relance CAT/CEVA</option>
+            <option value="Expert">🔍 Expertise</option>
+            <option value="Juridique">⚖ Contentieux</option>
+            <option value="Autre">📎 Autre</option>
+          </select>
+          <select id="rl-f-resp" onchange="renderRelances()">
+            <option value="">Tous les responsables</option>
+          </select>
+          <select id="rl-f-entite" onchange="renderRelances()">
+            <option value="">Toutes entités</option>
+            <option value="QUINCE">QUINCÉ</option>
+            <option value="DAMOIS">DAMOIS</option>
+            <option value="QUESNEL">QUESNEL</option>
+          </select>
+          <select id="rl-view" onchange="renderRelances()">
+            <option value="kanban">Vue Kanban</option>
+            <option value="liste">Vue liste</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="openRlModal()">+ Nouvelle relance</button>
+      </div>
+
+      <!-- Kanban view -->
+      <div id="rl-kanban" class="kanban">
+        <div class="kanban-col">
+          <div class="kanban-col-hd hd-overdue">
+            <span>⚠ En retard</span><span id="kc-overdue-count" class="badge" style="background:var(--red);color:#fff;">0</span>
+          </div>
+          <div class="kanban-col-body" id="kc-overdue"></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-col-hd hd-todo">
+            <span>📋 À faire</span><span id="kc-todo-count" class="badge" style="background:#E8A870;color:#1A0A00;">0</span>
+          </div>
+          <div class="kanban-col-body" id="kc-todo"></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-col-hd hd-progress">
+            <span>🔄 En cours</span><span id="kc-prog-count" class="badge" style="background:#818CF8;color:#fff;">0</span>
+          </div>
+          <div class="kanban-col-body" id="kc-prog"></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-col-hd hd-done">
+            <span>✅ Terminé</span><span id="kc-done-count" class="badge" style="background:#4ADE80;color:#052E16;">0</span>
+          </div>
+          <div class="kanban-col-body" id="kc-done"></div>
+        </div>
+      </div>
+
+      <!-- List view -->
+      <div id="rl-liste" style="display:none;">
+        <div class="card">
+          <div class="card-hd"><div class="card-ttl" id="rl-list-count">— relances</div></div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th>Échéance</th><th>Priorité</th><th>Type</th><th>Titre</th><th>Dossier</th>
+                <th>Conducteur</th><th>Entité</th><th>Responsable</th><th>Statut</th><th></th>
+              </tr></thead>
+              <tbody id="rl-list-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /sec-relances -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- MODAL RELANCE -->
+<div class="rl-modal-bg" id="rl-modal-bg" onclick="if(event.target===this)closeRlModal()">
+  <div class="rl-modal">
+    <div class="rl-modal-hd">
+      <h3 id="rl-modal-title">Nouvelle relance</h3>
+      <button class="btn btn-sm" onclick="closeRlModal()">✕</button>
+    </div>
+    <div class="rl-modal-bd">
+      <div class="rl-fgrp">
+        <label>Titre de la relance *</label>
+        <input type="text" id="rl-titre" placeholder="Ex : Relancer CAT pour facture manquante…"/>
+      </div>
+      <div class="rl-grid2">
+        <div class="rl-fgrp">
+          <label>Type</label>
+          <select id="rl-type">
+            <option value="Facture">📄 Relance facture</option>
+            <option value="Assurance">🛡 Relance assurance</option>
+            <option value="CAT">🔧 Relance CAT/CEVA</option>
+            <option value="Expert">🔍 Expertise</option>
+            <option value="Juridique">⚖ Contentieux</option>
+            <option value="Autre">📎 Autre</option>
+          </select>
+        </div>
+        <div class="rl-fgrp">
+          <label>Priorité</label>
+          <select id="rl-priorite">
+            <option value="Haute">🔴 Haute</option>
+            <option value="Moyenne" selected>🟡 Moyenne</option>
+            <option value="Basse">🟢 Basse</option>
+          </select>
+        </div>
+      </div>
+      <div class="rl-grid2">
+        <div class="rl-fgrp">
+          <label>Dossier lié (N° Archive)</label>
+          <input type="text" id="rl-archive" list="rl-archives-list" placeholder="240XXX ou 25XXX…" autocomplete="off"/>
+          <datalist id="rl-archives-list"></datalist>
+        </div>
+        <div class="rl-fgrp">
+          <label>Entité</label>
+          <select id="rl-entite">
+            <option value="">— Toutes —</option>
+            <option value="QUINCE">🟠 QUINCÉ</option>
+            <option value="DAMOIS">🟢 DAMOIS</option>
+            <option value="QUESNEL">🔵 QUESNEL</option>
+          </select>
+        </div>
+      </div>
+      <div class="rl-grid2">
+        <div class="rl-fgrp">
+          <label>Responsable</label>
+          <select id="rl-responsable">
+            <option value="Marie Dupont">Marie Dupont</option>
+            <option value="Amélie Martin">Amélie Martin</option>
+            <option value="Bérénice Leroy">Bérénice Leroy</option>
+            <option value="Administrateur">Administrateur</option>
+          </select>
+        </div>
+        <div class="rl-fgrp">
+          <label>Date d'échéance *</label>
+          <input type="date" id="rl-echeance"/>
+        </div>
+      </div>
+      <div class="rl-fgrp">
+        <label>Description / actions à mener</label>
+        <textarea id="rl-desc" rows="3" placeholder="Détails de la relance, contacts, références…"></textarea>
+      </div>
+      <div class="rl-fgrp">
+        <label>Statut</label>
+        <select id="rl-statut">
+          <option value="À faire">À faire</option>
+          <option value="En cours">En cours</option>
+          <option value="Terminé">Terminé</option>
+        </select>
+      </div>
+    </div>
+    <div class="rl-modal-ft">
+      <button class="btn" onclick="closeRlModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveRelance()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL FULL PAGE -->
+<div class="detail-page" id="detail-page">
+  <div class="detail-topbar">
+    <div class="detail-topbar-l">
+      <div class="detail-back" onclick="closeDetail()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2L4 7l5 5"/></svg>
+        Retour
+      </div>
+      <div>
+        <div class="detail-ttl" id="dp-ttl">—</div>
+        <div class="detail-sub" id="dp-sub">—</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;" id="topbar-actions">
+      <div class="dp-nav">
+        <button class="dp-nav-btn" id="dp-nav-prev" onclick="navSinistre(-1)" title="Sinistre précédent">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2L4 6l4 4"/></svg>
+          Préc.
+        </button>
+        <span class="dp-nav-count" id="dp-nav-count">1/1</span>
+        <button class="dp-nav-btn" id="dp-nav-next" onclick="navSinistre(1)" title="Sinistre suivant">
+          Suiv.
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2l4 4-4 4"/></svg>
+        </button>
+      </div>
+      <div style="width:1px;height:20px;background:var(--border);margin:0 2px;"></div>
+      <button class="btn" onclick="exportSingleCSV()">↓ Exporter</button>
+      <button class="btn" onclick="addRelanceFromSinistre(DATA[currentDetailIdx]&&DATA[currentDetailIdx].archive)">+ Relance</button>
+      <button class="btn" id="btn-edit-toggle" onclick="toggleEditMode()">✏ Modifier</button>
+      <button class="btn btn-primary" onclick="closeDetail()">Fermer</button>
+    </div>
+  </div>
+  <div class="detail-layout">
+    <!-- LEFT: main content -->
+    <div class="detail-main" id="dp-body"></div>
+    <!-- RIGHT: activity only -->
+    <div class="detail-right">
+      <div class="detail-right-header" style="padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:7px;">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="5"/><path d="M6.5 3.5v3.5l2 1"/></svg>
+        <span style="font-size:12px;font-weight:600;">Activité du dossier</span>
+        <span id="activity-count" style="margin-left:auto;font-size:10px;font-weight:600;padding:1px 7px;border-radius:10px;background:var(--blue-bg);color:var(--blue-t);">0</span>
+      </div>
+      <div id="dr-activity" class="detail-right-body" style="flex:1;overflow-y:auto;padding:12px 14px;">
+        <div id="activity-feed"></div>
+      </div>
+      <div class="comment-form">
+        <textarea class="comment-input" id="comment-input" rows="2" placeholder="Ajouter un commentaire…"></textarea>
+        <button class="comment-send" onclick="addComment()">Envoyer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<!-- Datalists statiques -->
+<datalist id="tiers-datalist">
+  <option value="CAT"><option value="CEVA"><option value="WTW"><option value="Helvetia">
+  <option value="Scania"><option value="Renault Trucks"><option value="Volvo Trucks">
+  <option value="DAF"><option value="Mercedes"><option value="MAN"><option value="Autre">
+</datalist>
+<!-- Input file statique — hors du DOM dynamique pour éviter les problèmes de sécurité navigateur -->
+<input type="file" id="file-input-static" style="display:none;position:fixed;top:-9999px" multiple onchange="handleFileInputMain(this)"/>
+<script src="supabase.min.js"></script>
 <script>
 /* ============================================================
    AUTH — Système d'identification
@@ -4144,8 +5015,6 @@ function init(){
 }
 init();
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============================================================
    SUPABASE — Intégration complète
@@ -4354,874 +5223,5 @@ window.deleteRelance=async function(id){
   }
 })();
 </script>
-</body>
-</html></head>YPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>QuincéSinistr — Suivi de sinistralité</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-
-<body>
-
-<!-- LOGIN SCREEN -->
-<div class="login-screen open" id="login-screen">
-  <div class="login-box">
-    <div class="login-logo">Quincé<span>Sinistr</span></div>
-    <div class="login-sub">Groupe Quincé — Gestion de sinistralité</div>
-    <label class="login-label">Adresse e-mail</label>
-    <input class="login-input" type="text" id="login-user" placeholder="Votre adresse e-mail" autocomplete="username"/>
-    <label class="login-label">Mot de passe</label>
-    <input class="login-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
-    <div class="login-err" id="login-err">Identifiant ou mot de passe incorrect.</div>
-    <button class="login-btn" onclick="doLogin()">Se connecter</button>
-
-  </div>
-</div>
-
-<!-- SIDEBAR -->
-<div class="sb">
-  <div class="sb-logo">
-    <div class="sb-brand">Quincé<span>Sinistr</span></div>
-    <div class="sb-sub">Groupe Quincé — Sinistralité parc</div>
-  </div>
-  <nav class="sb-nav">
-    <div class="sb-section">Analyse</div>
-    <div class="sb-item active" onclick="nav('dashboard',this)">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
-      Tableau de bord
-    </div>
-    <div class="sb-section">Sinistres</div>
-    <div class="sb-item" onclick="nav('list',this)">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3.5h10M2 7h10M2 10.5h7"/></svg>
-      Tous les sinistres
-    </div>
-    <div class="sb-item" onclick="navListFiltered('Flotte',this)">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="5" width="12" height="6" rx="1.5"/><path d="M2 5V4a2 2 0 014 0v1"/><circle cx="4" cy="11" r="1.2"/><circle cx="10" cy="11" r="1.2"/></svg>
-      Sinistres Flotte
-    </div>
-    <div class="sb-item" onclick="navListFiltered('Marchandise',this)">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h10l-1 8H3L2 3z"/><path d="M5 3V2a2 2 0 014 0v1"/></svg>
-      Sinistres Marchandise
-    </div>
-    <div class="sb-item" onclick="nav('nouveau',this)">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><path d="M7 4.5v5M4.5 7h5"/></svg>
-      Nouveau sinistre
-    </div>
-    <div class="sb-section">Suivi</div>
-    <div class="sb-item" onclick="nav('prescriptions',this)">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><path d="M7 4v3.5l2 1"/></svg>
-      Prescriptions
-    </div>
-    <div class="sb-item" onclick="nav('assurance',this)">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 1.5L2 4v4c0 2.5 2.2 4.5 5 5 2.8-.5 5-2.5 5-5V4L7 1.5z"/></svg>
-      Suivi assurance
-    </div>
-    <div class="sb-item" onclick="nav('relances',this)">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h10M2 7h10M2 11h6"/><circle cx="11" cy="11" r="2.5"/><path d="M11 9.5v1.5l1 1"/></svg>
-      Relances
-      <span id="sb-relances-badge" style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:var(--red);color:#fff;display:none;"></span>
-    </div>
-    <div class="sb-item" onclick="nav('compta',this)">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="2" width="11" height="10" rx="1.5"/><path d="M1.5 5h11M5 5v7M5 2v3"/></svg>
-      Comptabilité
-    </div>
-    <div class="sb-item" onclick="nav('audit',this)">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="11" rx="1"/><path d="M4.5 5h5M4.5 7.5h3.5"/></svg>
-      Journal d'audit
-    </div>
-    <div class="sb-item" onclick="nav('heatmap',this)">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="3" height="3" rx=".5"/><rect x="5.5" y="1" width="3" height="3" rx=".5"/><rect x="10" y="1" width="3" height="3" rx=".5"/><rect x="1" y="5.5" width="3" height="3" rx=".5"/><rect x="5.5" y="5.5" width="3" height="3" rx=".5"/><rect x="10" y="5.5" width="3" height="3" rx=".5"/><rect x="1" y="10" width="3" height="3" rx=".5"/><rect x="5.5" y="10" width="3" height="3" rx=".5"/><rect x="10" y="10" width="3" height="3" rx=".5"/></svg>
-      Suivi mensuel
-    </div>
-  </nav>
-  <div class="sb-foot">
-    <div class="user">
-      <div class="user-av" style="background:var(--accent);color:#fff">MD</div>
-      <div>
-        <div class="user-name">Marie Dupont</div>
-        <div class="user-role">Gestionnaire sinistres</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MAIN -->
-<div class="main">
-  <div class="topbar">
-    <div class="page-ttl" id="page-ttl">Tableau de bord</div>
-    <div class="topbar-r">
-      <button class="btn" onclick="exportCSV()">↓ Exporter CSV</button>
-      <button class="btn btn-primary" onclick="nav('nouveau',null)">+ Nouveau sinistre</button>
-    </div>
-  </div>
-
-  <div class="content">
-
-    <!-- ===== DASHBOARD ===== -->
-    <div class="sec active" id="sec-dashboard">
-      <!-- Barre de filtres période -->
-      <div class="dash-filter-bar">
-        <label>📅 Période</label>
-        <select class="dash-filter-sel" id="df-year" onchange="renderDash()">
-          <option value="">Toutes les années</option>
-        </select>
-        <select class="dash-filter-sel" id="df-month" onchange="renderDash()">
-          <option value="">Tous les mois</option>
-          <option value="1">Janvier</option><option value="2">Février</option>
-          <option value="3">Mars</option><option value="4">Avril</option>
-          <option value="5">Mai</option><option value="6">Juin</option>
-          <option value="7">Juillet</option><option value="8">Août</option>
-          <option value="9">Septembre</option><option value="10">Octobre</option>
-          <option value="11">Novembre</option><option value="12">Décembre</option>
-        </select>
-        <div class="dash-filter-sep"></div>
-        <label>Entité</label>
-        <select class="dash-filter-sel" id="df-entite" onchange="renderDash()">
-          <option value="">Toutes</option>
-          <option value="QUINCE">QUINCÉ</option>
-          <option value="DAMOIS">DAMOIS</option>
-          <option value="QUESNEL">QUESNEL</option>
-        </select>
-        <label>Type</label>
-        <select class="dash-filter-sel" id="df-type" onchange="renderDash()">
-          <option value="">Tous</option>
-          <option value="Flotte">🚛 Flotte</option>
-          <option value="Marchandise">📦 Marchandise</option>
-        </select>
-        <div class="dash-filter-sep"></div>
-        <label>Conducteur</label>
-        <select class="dash-filter-sel" id="df-cond" onchange="renderDash()">
-          <option value="">Tous</option>
-        </select>
-        <label>Affréteur</label>
-        <select class="dash-filter-sel" id="df-aff" onchange="renderDash()">
-          <option value="">Tous</option>
-          <option value="CAT">CAT</option>
-          <option value="CEVA">CEVA</option>
-        </select>
-        <button class="dash-filter-reset" onclick="dashResetFilters()">✕ Réinitialiser</button>
-        <span class="dash-period-label" id="df-label"></span>
-      </div>
-      <!-- KPI comptage -->
-      <div class="metrics" id="dash-metrics"></div>
-      <!-- KPI financiers -->
-      <div class="metrics-cost" id="dash-metrics-cost"></div>
-      <div class="g2">
-        <div class="card">
-          <div class="card-hd"><div class="card-ttl">Sinistres par conducteur (Top 10)</div></div>
-          <div class="card-bd" id="ch-conducteur"></div>
-        </div>
-        <div class="card">
-          <div class="card-hd"><div class="card-ttl">Répartition par état</div></div>
-          <div class="card-bd">
-            <div class="donut-wrap">
-              <canvas id="donut" width="110" height="110" style="flex-shrink:0"></canvas>
-              <div class="leg" id="donut-leg"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="g2">
-        <div class="card">
-          <div class="card-hd"><div class="card-ttl">Sinistres par affréteur</div></div>
-          <div class="card-bd" id="ch-affreteur"></div>
-        </div>
-        <div class="card">
-          <div class="card-hd"><div class="card-ttl">Chiffrage par conducteur (Top 8) — €</div></div>
-          <div class="card-bd" id="ch-montant"></div>
-        </div>
-      </div>
-      <div class="card mb14">
-        <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <div class="card-ttl" id="dash-list-title">Sinistres de la période</div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span class="badge" id="alert-count" style="background:var(--accent-bg);color:var(--accent-t);font-size:10px;"></span>
-            <button class="btn btn-sm btn-primary" onclick="dashGoToList()">Voir dans la liste →</button>
-          </div>
-        </div>
-        <div class="tbl-wrap" style="max-height:380px;overflow-y:auto;">
-          <table>
-            <thead><tr>
-              <th class="sortable sort-desc" id="dsh-date" onclick="dashSortBy('date',this)">Date</th>
-              <th class="sortable" id="dsh-archive" onclick="dashSortBy('archive',this)">Archive</th>
-              <th>Entité</th>
-              <th>Type</th>
-              <th class="sortable" id="dsh-conducteur" onclick="dashSortBy('conducteur',this)">Conducteur</th>
-              <th class="sortable" id="dsh-affreteur" onclick="dashSortBy('affreteur',this)">Affréteur</th>
-              <th class="sortable" id="dsh-chiffrage" onclick="dashSortBy('chiffrage',this)">Chiffrage</th>
-              <th class="sortable" id="dsh-coutnet" onclick="dashSortBy('coutnet',this)">Coût net</th>
-              <th class="sortable" id="dsh-rec" onclick="dashSortBy('rec',this)">Récupéré</th>
-              <th>NREF</th>
-              <th>Contestation</th>
-              <th class="sortable" id="dsh-presc" onclick="dashSortBy('presc',this)">Prescription</th>
-              <th class="sortable" id="dsh-etat" onclick="dashSortBy('etat',this)">État</th>
-              <th></th>
-            </tr></thead>
-            <tbody id="alert-tbody"></tbody>
-          </table>
-        </div>
-        <div class="sum-row" id="dash-sum-row"></div>
-      </div>
-    </div>
-
-    <!-- ===== LIST ===== -->
-    <div class="sec" id="sec-list">
-      <div class="filters">
-        <div class="search-wrap"><input type="text" placeholder="🔍 Rechercher conducteur, immat, NREF, archive, affréteur…" oninput="applyFilters();" id="f-search"/></div>
-        <select onchange="applyFilters()" id="f-entite">
-          <option value="">Toutes entités</option>
-          <option value="QUINCE">🟠 QUINCÉ</option>
-          <option value="DAMOIS">🟢 DAMOIS</option>
-          <option value="QUESNEL">🔵 QUESNEL</option>
-        </select>
-        <select onchange="applyFilters()" id="f-type">
-          <option value="">Tous types</option>
-          <option value="Flotte">🚛 Flotte</option>
-          <option value="Marchandise">📦 Marchandise</option>
-        </select>
-        <select onchange="applyFilters()" id="f-etat">
-          <option value="">Tous états</option>
-          <option value="en-cours">En cours</option>
-          <option value="Terminé">Terminé</option>
-        </select>
-        <select onchange="applyFilters()" id="f-affreteur">
-          <option value="">Tous affréteurs</option>
-          <option value="CAT">CAT</option>
-          <option value="CEVA">CEVA</option>
-        </select>
-        <select onchange="applyFilters()" id="f-conducteur-filter">
-          <option value="">Tous conducteurs</option>
-        </select>
-        <select onchange="applyFilters()" id="f-contest">
-          <option value="">Tous</option>
-          <option value="oui">Contestation</option>
-          <option value="non">Sans contestation</option>
-        </select>
-      </div>
-      <div class="card">
-        <div class="card-hd">
-          <div class="card-ttl" id="list-count">— sinistres</div>
-          <button class="btn btn-primary btn-sm" onclick="nav('nouveau',null)">+ Ajouter</button>
-        </div>
-        <div class="tbl-wrap" style="max-height:calc(100vh - 260px);overflow-y:auto;">
-          <table>
-            <thead><tr>
-              <th class="sortable sort-desc" id="sh-date" onclick="sortBy('date',this)">Date</th>
-              <th class="sortable" id="sh-archive" onclick="sortBy('archive',this)">N° Archive</th>
-              <th class="sortable" id="sh-entite" onclick="sortBy('entite',this)">Entité</th>
-              <th class="sortable" id="sh-type_sinistre" onclick="sortBy('type_sinistre',this)">Type</th>
-              <th class="sortable" id="sh-conducteur" onclick="sortBy('conducteur',this)">Conducteur</th>
-              <th>Immat.</th>
-              <th>Affréteur</th>
-              <th class="sortable" id="sh-chiffrage" onclick="sortBy('chiffrage',this)">Chiffrage</th>
-              <th class="sortable" id="sh-franchise" onclick="sortBy('franchise',this)">Franchise</th>
-              <th>Factures</th>
-              <th class="sortable" id="sh-rbt" onclick="sortBy('rbt',this)">Rbt assurance</th>
-              <th>NREF</th>
-              <th>Contestation</th>
-              <th class="sortable" id="sh-etat" onclick="sortBy('etat',this)">État</th>
-              <th></th>
-            </tr></thead>
-            <tbody id="list-tbody"></tbody>
-          </table>
-        </div>
-        <div class="sum-row" id="sum-row"></div>
-      </div>
-    </div>
-
-    <!-- ===== NOUVEAU ===== -->
-    <div class="sec" id="sec-nouveau">
-      <div class="fblock">
-        <div class="fblock-ttl">Identification du sinistre</div>
-        <div class="fg4">
-          <div class="fgrp"><label class="req">Date du sinistre</label><input type="date" id="nf-date" onchange="updatePresc()"/></div>
-          <div class="fgrp"><label>Prescription (calculée)</label><input type="text" id="nf-presc" readonly placeholder="Auto" style="background:var(--surface2)"/></div>
-          <div class="fgrp"><label>N° Archive</label><input type="text" id="nf-archive" placeholder="240XXX / 25XXX"/></div>
-          <div class="fgrp"><label class="req">Entité</label>
-            <select id="nf-entite">
-              <option value="QUINCE">🟠 QUINCÉ</option>
-              <option value="DAMOIS">🟢 DAMOIS</option>
-              <option value="QUESNEL">🔵 QUESNEL</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
-          <div class="fgrp" style="min-width:160px;">
-            <label class="req">Type de sinistre</label>
-            <select id="nf-type">
-              <option value="Flotte">🚛 Flotte (véhicule)</option>
-              <option value="Marchandise">📦 Marchandise</option>
-            </select>
-          </div>
-          <div class="fgrp" style="min-width:160px;">
-            <label class="req">État</label>
-            <select id="nf-etat">
-              <option value="en-cours">En cours</option>
-              <option value="Terminé">Terminé</option>
-            </select>
-          </div>
-          <div class="fgrp" style="min-width:140px;">
-            <label>Montant franchise (€)</label>
-            <input type="number" id="nf-franchise" placeholder="0.00" step="0.01"/>
-          </div>
-        </div>
-        <div id="presc-msg" style="margin-top:8px;"></div>
-      </div>
-
-      <div class="fblock">
-        <div class="fblock-ttl">Véhicule & conducteur</div>
-        <div class="fg4">
-          <div class="fgrp"><label class="req">Conducteur</label>
-            <input type="text" id="nf-conducteur" list="conducteurs-list" placeholder="Sélectionner ou saisir un nom…" autocomplete="off"/>
-            <datalist id="conducteurs-list"></datalist>
-          </div>
-          <div class="fgrp"><label>Immatriculation</label><input type="text" id="nf-immat" placeholder="AB-123-CD"/></div>
-          <div class="fgrp"><label>N° de châssis (VIN)</label><input type="text" id="nf-chassis" placeholder="17 caractères"/></div>
-          <div class="fgrp"><label>Affréteur</label>
-            <select id="nf-affreteur">
-              <option value="">— Aucun —</option>
-              <option>CAT</option>
-              <option>CEVA</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="fblock">
-        <div class="fblock-ttl">Lettre de mise en cause & dossier</div>
-        <div class="fg4">
-          <div class="fgrp"><label>N° de Lettre MEC</label><input type="text" id="nf-ldv" placeholder="24XXXXX"/></div>
-          <div class="fgrp"><label>NREF assurance</label><input type="text" id="nf-nref" placeholder="A2XXX…"/></div>
-          <div class="fgrp"><label>N° dossier archive / lien</label><input type="text" id="nf-lien" placeholder="Lien dossier"/></div>
-          <div class="fgrp" style="align-items:flex-start;justify-content:flex-end;flex-direction:row;gap:16px;padding-top:20px;">
-            <label class="fcheck"><input type="checkbox" id="nf-contest"/> Contestation</label>
-            <label class="fcheck"><input type="checkbox" id="nf-expertise"/> Expertise</label>
-          </div>
-        </div>
-      </div>
-
-      <div class="fblock">
-        <div class="fblock-ttl" style="display:flex;align-items:center;justify-content:space-between;">
-          Chiffrage & facturation
-          <span style="font-size:10px;color:var(--text3);font-weight:400;">Ajoutez autant de factures et d'avoirs que nécessaire</span>
-        </div>
-        <div class="fgrp" style="margin-bottom:10px;max-width:200px;">
-          <label>Chiffrage / Devis (€)</label>
-          <input type="number" id="nf-chiffrage" placeholder="0.00" step="0.01"/>
-        </div>
-        <div class="fact-list" id="nf-factures-list"></div>
-        <div class="fact-add-btn" onclick="addFactureRow('nf-factures-list')">+ Ajouter une facture / avoir</div>
-        <div class="fact-total" id="nf-fact-total" style="margin-top:8px;display:none;"></div>
-      </div>
-
-      <div class="fblock">
-        <div class="fblock-ttl">Revente marchandise & remboursement assurance</div>
-        <div class="fg4">
-          <div class="fgrp"><label>Montant revente marchandise (€)</label><input type="number" id="nf-revente" placeholder="0.00" step="0.01"/></div>
-          <div class="fgrp"><label>Date paiement revente</label><input type="date" id="nf-drevente"/></div>
-          <div class="fgrp"><label>Montant rbt assurance (€)</label><input type="number" id="nf-rbt" placeholder="0.00" step="0.01"/></div>
-          <div class="fgrp"><label>Date rbt assurance</label><input type="date" id="nf-drbt"/></div>
-        </div>
-      </div>
-
-      <div class="fblock">
-        <div class="fblock-ttl">Observations</div>
-        <div class="fgrp"><textarea id="nf-obs" rows="3" placeholder="Observations, transmissions, actions en cours…" style="resize:vertical;"></textarea></div>
-      </div>
-
-      <div class="form-actions">
-        <button class="btn" onclick="nav('list',null)">Annuler</button>
-        <button class="btn btn-primary" onclick="saveNew()">Enregistrer le sinistre</button>
-      </div>
-    </div>
-
-    <!-- ===== PRESCRIPTIONS ===== -->
-    <div class="sec" id="sec-prescriptions">
-      <div id="presc-alerts"></div>
-      <div class="card">
-        <div class="card-hd"><div class="card-ttl">Suivi des prescriptions (1 an à compter de la date du sinistre)</div></div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr>
-              <th>Date sinistre</th><th>N° Archive</th><th>Conducteur</th><th>Date prescription</th>
-              <th>Jours restants</th><th>Chiffrage</th><th>NREF</th><th>État</th><th>Observations</th>
-            </tr></thead>
-            <tbody id="presc-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== ASSURANCE ===== -->
-    <div class="sec" id="sec-assurance">
-      <div class="metrics" id="ins-metrics"></div>
-      <div class="g2 mb14">
-        <div class="card">
-          <div class="card-hd"><div class="card-ttl">Dossiers avec NREF assurance</div></div>
-          <div class="tbl-wrap" style="max-height:400px;overflow-y:auto;">
-            <table>
-              <thead><tr><th>Date</th><th>N° Archive</th><th>Conducteur</th><th>NREF</th><th>Chiffrage</th><th>Rbt assurance</th><th>Date rbt</th><th>État</th></tr></thead>
-              <tbody id="ins-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-hd"><div class="card-ttl">Montants remboursés par NREF</div></div>
-          <div class="card-bd" id="ch-nref"></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-hd"><div class="card-ttl">Dossiers en attente de remboursement assurance</div></div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Date</th><th>N° Archive</th><th>Conducteur</th><th>NREF</th><th>Chiffrage</th><th>Observations</th></tr></thead>
-            <tbody id="ins-pending-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== AUDIT ===== -->
-    <div class="sec" id="sec-audit">
-      <div class="tabs">
-        <div class="tab active" onclick="switchTab('audit-log',this)">Journal des modifications</div>
-        <div class="tab" onclick="switchTab('audit-stats',this)">Statistiques utilisateurs</div>
-      </div>
-      <div id="audit-log">
-        <div class="g2">
-          <div class="card">
-            <div class="card-hd"><div class="card-ttl">Historique des actions</div></div>
-            <div class="card-bd" id="audit-entries" style="max-height:500px;overflow-y:auto;"></div>
-          </div>
-          <div class="card">
-            <div class="card-hd"><div class="card-ttl">Modifications récentes</div></div>
-            <div class="tbl-wrap"><table>
-              <thead><tr><th>Archive</th><th>Champ</th><th>Par</th><th>Date</th></tr></thead>
-              <tbody id="audit-tbl"></tbody>
-            </table></div>
-          </div>
-        </div>
-      </div>
-      <div id="audit-stats" style="display:none;">
-        <div class="g2">
-          <div class="card">
-            <div class="card-hd"><div class="card-ttl">Actions par utilisateur</div></div>
-            <div class="card-bd" id="ch-users"></div>
-          </div>
-          <div class="card">
-            <div class="card-hd"><div class="card-ttl">Récapitulatif</div></div>
-            <div class="tbl-wrap"><table>
-              <thead><tr><th>Utilisateur</th><th>Créations</th><th>Modifications</th><th>Total</th></tr></thead>
-              <tbody id="audit-recap"></tbody>
-            </table></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== SUIVI MENSUEL (HEATMAP) ===== -->
-    <div class="sec" id="sec-heatmap">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Sinistres par conducteur et par mois</div>
-          <div style="font-size:11px;color:var(--text3);">Nombre de sinistres — cliquer sur une cellule pour voir les dossiers</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="font-size:11px;color:var(--text3);">Afficher :</div>
-          <select id="hm-year" onchange="renderHeatmap()" style="font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid var(--border2);border-radius:6px;padding:5px 9px;background:var(--surface);color:var(--text);outline:none;"></select>
-          <select id="hm-metric" onchange="renderHeatmap()" style="font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid var(--border2);border-radius:6px;padding:5px 9px;background:var(--surface);color:var(--text);outline:none;">
-            <option value="count">Nombre de sinistres</option>
-            <option value="chiffrage">Chiffrage total (€)</option>
-          </select>
-        </div>
-      </div>
-      <div class="card mb14">
-        <div class="card-bd" style="padding:12px;">
-          <div class="heatmap-wrap" id="heatmap-container"></div>
-        </div>
-      </div>
-      <div class="g2">
-        <div class="card">
-          <div class="card-hd"><div class="card-ttl">Tendance mensuelle — tous conducteurs</div></div>
-          <div class="card-bd" id="hm-trend"></div>
-        </div>
-        <div class="card">
-          <div class="card-hd"><div class="card-ttl">Top conducteurs — année sélectionnée</div></div>
-          <div class="card-bd" id="hm-top"></div>
-        </div>
-      </div>
-      <!-- mini modal pour cellule -->
-      <div id="hm-popup" style="display:none;position:fixed;z-index:400;background:var(--surface);border:1px solid var(--border2);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:14px 16px;min-width:260px;max-width:340px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="font-size:12px;font-weight:600;" id="hm-popup-ttl"></div>
-          <button onclick="document.getElementById('hm-popup').style.display='none'" style="font-size:14px;background:none;border:none;cursor:pointer;color:var(--text3);line-height:1;">✕</button>
-        </div>
-        <div id="hm-popup-body"></div>
-      </div>
-    </div>
-
-    <!-- ===== COMPTABILITÉ / PROVISIONS ===== -->
-    <div class="sec" id="sec-compta">
-
-      <!-- Bandeau export -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);">Provisions comptables — sinistres en cours</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:2px;">Charges à provisionner : factures non reçues + remboursements assurance attendus</div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-primary" onclick="exportComptaCSV()">↓ Exporter provisions</button>
-        </div>
-      </div>
-      <div class="compta-date-filter">
-        <label>📅 Date de référence :</label>
-        <input type="date" id="compta-refdate" onchange="renderCompta()" title="Provisions à cette date — sinistres dont la facture n'était pas reçue à cette date"/>
-        <span style="color:var(--accent-t);font-size:11px;" id="compta-refdate-label"></span>
-        <select id="compta-entite-filter" onchange="renderCompta()" style="font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid var(--accent);border-radius:5px;padding:4px 8px;background:var(--surface);color:var(--text);outline:none;margin-left:8px;">
-          <option value="">Toutes entités</option>
-          <option value="QUINCE">🟠 QUINCÉ</option>
-          <option value="DAMOIS">🟢 DAMOIS</option>
-          <option value="QUESNEL">🔵 QUESNEL</option>
-        </select>
-      </div>
-
-      <!-- KPI provisions -->
-      <div class="metrics" id="compta-metrics" style="grid-template-columns:repeat(4,1fr);"></div>
-
-      <!-- Tabs -->
-      <div class="tabs" style="margin-bottom:14px;">
-        <div class="tab active" onclick="switchComptaTab('factures',this)">📄 Provisions factures non reçues</div>
-        <div class="tab" onclick="switchComptaTab('assurance',this)">🛡 Provisions remboursements assurance</div>
-        <div class="tab" onclick="switchComptaTab('recap',this)">📊 Récapitulatif par période</div>
-      </div>
-
-      <!-- TAB: Factures non reçues -->
-      <div id="ctab-factures">
-        <div class="card mb14">
-          <div class="card-hd">
-            <div class="card-ttl">Sinistres sans facture reçue — charge à provisionner</div>
-            <span id="compta-fact-badge" class="badge b-warn"></span>
-          </div>
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr>
-                <th>Date sinistre</th><th>Archive</th><th>Entité</th><th>Type</th><th>Conducteur</th><th>Affréteur</th>
-                <th>Chiffrage / Devis</th><th>Fact. reçues (à la date)</th><th>Provision charges</th><th>Observations</th><th>État</th>
-              </tr></thead>
-              <tbody id="compta-fact-tbody"></tbody>
-              <tfoot><tr>
-                <td colspan="6" style="font-weight:700;font-size:11px;padding:8px 10px;background:var(--surface3);">TOTAL</td>
-                <td id="compta-fact-tot-chiff" style="font-weight:700;text-align:right;padding:8px 10px;background:var(--surface3);"></td>
-                <td id="compta-fact-tot-recu" style="font-weight:700;text-align:right;padding:8px 10px;background:var(--surface3);"></td>
-                <td id="compta-fact-tot-prov" style="font-weight:700;text-align:right;padding:8px 10px;background:#FEF0E7;color:var(--accent);"></td>
-                <td colspan="2" style="background:var(--surface3);"></td>
-              </tr></tfoot>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB: Remboursements assurance attendus -->
-      <div id="ctab-assurance" style="display:none;">
-        <div class="card mb14">
-          <div class="card-hd">
-            <div class="card-ttl">Remboursements assurance attendus — produit à provisionner</div>
-            <span id="compta-rbt-badge" class="badge b-nref"></span>
-          </div>
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr>
-                <th>Date sinistre</th><th>Archive</th><th>Entité</th><th>Type</th><th>Conducteur</th>
-                <th>NREF</th><th>Chiffrage</th><th>Franchise</th><th>Rbt à percevoir (chiff. − franchise)</th><th>État</th>
-              </tr></thead>
-              <tbody id="compta-rbt-tbody"></tbody>
-              <tfoot><tr>
-                <td colspan="6" style="font-weight:700;font-size:11px;padding:8px 10px;background:var(--surface3);">TOTAL</td>
-                <td id="compta-rbt-tot-chiff" style="font-weight:700;text-align:right;padding:8px 10px;background:var(--surface3);"></td>
-                <td id="compta-rbt-tot-rbt" style="font-weight:700;text-align:right;padding:8px 10px;background:var(--surface3);"></td>
-                <td id="compta-rbt-tot-fr" style="font-weight:700;text-align:right;padding:8px 10px;background:var(--surface3);"></td>
-                <td id="compta-rbt-tot-prov" style="font-weight:700;text-align:right;padding:8px 10px;background:#E6F4EC;color:var(--green);"></td>
-                <td style="background:var(--surface3);"></td>
-              </tr></tfoot>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB: Récapitulatif par mois -->
-      <div id="ctab-recap" style="display:none;">
-        <div class="g2">
-          <div class="card">
-            <div class="card-hd"><div class="card-ttl">Provisions nettes par mois — année sélectionnée</div></div>
-            <div class="card-bd" id="compta-bar-fact"></div>
-          </div>
-          <div class="card">
-            <div class="card-hd"><div class="card-ttl">Produits à recevoir par mois</div></div>
-            <div class="card-bd" id="compta-bar-rbt"></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-hd"><div class="card-ttl">Tableau récapitulatif mensuel des provisions</div></div>
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr>
-                <th>Mois</th><th>Nb sinistres</th>
-                <th>Chiffrage total</th><th>Factures reçues</th><th>Provision charges (factures manquantes)</th>
-                <th>Rbt attendus</th><th>Provision produits (rbt assurance)</th>
-                <th>Provision nette</th>
-              </tr></thead>
-              <tbody id="compta-recap-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /sec-compta -->
-
-    <!-- ===== RELANCES ===== -->
-    <div class="sec" id="sec-relances">
-
-      <!-- Stats bar -->
-      <div class="rl-stats" id="rl-stats"></div>
-
-      <!-- Filters + Add button -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;">
-        <div class="relance-filters">
-          <select id="rl-f-statut" onchange="renderRelances()">
-            <option value="">Tous les statuts</option>
-            <option value="À faire">À faire</option>
-            <option value="En cours">En cours</option>
-            <option value="Terminé">Terminé</option>
-            <option value="En retard">En retard</option>
-          </select>
-          <select id="rl-f-type" onchange="renderRelances()">
-            <option value="">Tous types</option>
-            <option value="Facture">📄 Relance facture</option>
-            <option value="Assurance">🛡 Relance assurance</option>
-            <option value="CAT">🔧 Relance CAT/CEVA</option>
-            <option value="Expert">🔍 Expertise</option>
-            <option value="Juridique">⚖ Contentieux</option>
-            <option value="Autre">📎 Autre</option>
-          </select>
-          <select id="rl-f-resp" onchange="renderRelances()">
-            <option value="">Tous les responsables</option>
-          </select>
-          <select id="rl-f-entite" onchange="renderRelances()">
-            <option value="">Toutes entités</option>
-            <option value="QUINCE">QUINCÉ</option>
-            <option value="DAMOIS">DAMOIS</option>
-            <option value="QUESNEL">QUESNEL</option>
-          </select>
-          <select id="rl-view" onchange="renderRelances()">
-            <option value="kanban">Vue Kanban</option>
-            <option value="liste">Vue liste</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" onclick="openRlModal()">+ Nouvelle relance</button>
-      </div>
-
-      <!-- Kanban view -->
-      <div id="rl-kanban" class="kanban">
-        <div class="kanban-col">
-          <div class="kanban-col-hd hd-overdue">
-            <span>⚠ En retard</span><span id="kc-overdue-count" class="badge" style="background:var(--red);color:#fff;">0</span>
-          </div>
-          <div class="kanban-col-body" id="kc-overdue"></div>
-        </div>
-        <div class="kanban-col">
-          <div class="kanban-col-hd hd-todo">
-            <span>📋 À faire</span><span id="kc-todo-count" class="badge" style="background:#E8A870;color:#1A0A00;">0</span>
-          </div>
-          <div class="kanban-col-body" id="kc-todo"></div>
-        </div>
-        <div class="kanban-col">
-          <div class="kanban-col-hd hd-progress">
-            <span>🔄 En cours</span><span id="kc-prog-count" class="badge" style="background:#818CF8;color:#fff;">0</span>
-          </div>
-          <div class="kanban-col-body" id="kc-prog"></div>
-        </div>
-        <div class="kanban-col">
-          <div class="kanban-col-hd hd-done">
-            <span>✅ Terminé</span><span id="kc-done-count" class="badge" style="background:#4ADE80;color:#052E16;">0</span>
-          </div>
-          <div class="kanban-col-body" id="kc-done"></div>
-        </div>
-      </div>
-
-      <!-- List view -->
-      <div id="rl-liste" style="display:none;">
-        <div class="card">
-          <div class="card-hd"><div class="card-ttl" id="rl-list-count">— relances</div></div>
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr>
-                <th>Échéance</th><th>Priorité</th><th>Type</th><th>Titre</th><th>Dossier</th>
-                <th>Conducteur</th><th>Entité</th><th>Responsable</th><th>Statut</th><th></th>
-              </tr></thead>
-              <tbody id="rl-list-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /sec-relances -->
-
-  </div><!-- /content -->
-</div><!-- /main -->
-
-<!-- MODAL RELANCE -->
-<div class="rl-modal-bg" id="rl-modal-bg" onclick="if(event.target===this)closeRlModal()">
-  <div class="rl-modal">
-    <div class="rl-modal-hd">
-      <h3 id="rl-modal-title">Nouvelle relance</h3>
-      <button class="btn btn-sm" onclick="closeRlModal()">✕</button>
-    </div>
-    <div class="rl-modal-bd">
-      <div class="rl-fgrp">
-        <label>Titre de la relance *</label>
-        <input type="text" id="rl-titre" placeholder="Ex : Relancer CAT pour facture manquante…"/>
-      </div>
-      <div class="rl-grid2">
-        <div class="rl-fgrp">
-          <label>Type</label>
-          <select id="rl-type">
-            <option value="Facture">📄 Relance facture</option>
-            <option value="Assurance">🛡 Relance assurance</option>
-            <option value="CAT">🔧 Relance CAT/CEVA</option>
-            <option value="Expert">🔍 Expertise</option>
-            <option value="Juridique">⚖ Contentieux</option>
-            <option value="Autre">📎 Autre</option>
-          </select>
-        </div>
-        <div class="rl-fgrp">
-          <label>Priorité</label>
-          <select id="rl-priorite">
-            <option value="Haute">🔴 Haute</option>
-            <option value="Moyenne" selected>🟡 Moyenne</option>
-            <option value="Basse">🟢 Basse</option>
-          </select>
-        </div>
-      </div>
-      <div class="rl-grid2">
-        <div class="rl-fgrp">
-          <label>Dossier lié (N° Archive)</label>
-          <input type="text" id="rl-archive" list="rl-archives-list" placeholder="240XXX ou 25XXX…" autocomplete="off"/>
-          <datalist id="rl-archives-list"></datalist>
-        </div>
-        <div class="rl-fgrp">
-          <label>Entité</label>
-          <select id="rl-entite">
-            <option value="">— Toutes —</option>
-            <option value="QUINCE">🟠 QUINCÉ</option>
-            <option value="DAMOIS">🟢 DAMOIS</option>
-            <option value="QUESNEL">🔵 QUESNEL</option>
-          </select>
-        </div>
-      </div>
-      <div class="rl-grid2">
-        <div class="rl-fgrp">
-          <label>Responsable</label>
-          <select id="rl-responsable">
-            <option value="Marie Dupont">Marie Dupont</option>
-            <option value="Amélie Martin">Amélie Martin</option>
-            <option value="Bérénice Leroy">Bérénice Leroy</option>
-            <option value="Administrateur">Administrateur</option>
-          </select>
-        </div>
-        <div class="rl-fgrp">
-          <label>Date d'échéance *</label>
-          <input type="date" id="rl-echeance"/>
-        </div>
-      </div>
-      <div class="rl-fgrp">
-        <label>Description / actions à mener</label>
-        <textarea id="rl-desc" rows="3" placeholder="Détails de la relance, contacts, références…"></textarea>
-      </div>
-      <div class="rl-fgrp">
-        <label>Statut</label>
-        <select id="rl-statut">
-          <option value="À faire">À faire</option>
-          <option value="En cours">En cours</option>
-          <option value="Terminé">Terminé</option>
-        </select>
-      </div>
-    </div>
-    <div class="rl-modal-ft">
-      <button class="btn" onclick="closeRlModal()">Annuler</button>
-      <button class="btn btn-primary" onclick="saveRelance()">Enregistrer</button>
-    </div>
-  </div>
-</div>
-
-<!-- DETAIL FULL PAGE -->
-<div class="detail-page" id="detail-page">
-  <div class="detail-topbar">
-    <div class="detail-topbar-l">
-      <div class="detail-back" onclick="closeDetail()">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2L4 7l5 5"/></svg>
-        Retour
-      </div>
-      <div>
-        <div class="detail-ttl" id="dp-ttl">—</div>
-        <div class="detail-sub" id="dp-sub">—</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;" id="topbar-actions">
-      <div class="dp-nav">
-        <button class="dp-nav-btn" id="dp-nav-prev" onclick="navSinistre(-1)" title="Sinistre précédent">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2L4 6l4 4"/></svg>
-          Préc.
-        </button>
-        <span class="dp-nav-count" id="dp-nav-count">1/1</span>
-        <button class="dp-nav-btn" id="dp-nav-next" onclick="navSinistre(1)" title="Sinistre suivant">
-          Suiv.
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2l4 4-4 4"/></svg>
-        </button>
-      </div>
-      <div style="width:1px;height:20px;background:var(--border);margin:0 2px;"></div>
-      <button class="btn" onclick="exportSingleCSV()">↓ Exporter</button>
-      <button class="btn" onclick="addRelanceFromSinistre(DATA[currentDetailIdx]&&DATA[currentDetailIdx].archive)">+ Relance</button>
-      <button class="btn" id="btn-edit-toggle" onclick="toggleEditMode()">✏ Modifier</button>
-      <button class="btn btn-primary" onclick="closeDetail()">Fermer</button>
-    </div>
-  </div>
-  <div class="detail-layout">
-    <!-- LEFT: main content -->
-    <div class="detail-main" id="dp-body"></div>
-    <!-- RIGHT: activity only -->
-    <div class="detail-right">
-      <div class="detail-right-header" style="padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:7px;">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="5"/><path d="M6.5 3.5v3.5l2 1"/></svg>
-        <span style="font-size:12px;font-weight:600;">Activité du dossier</span>
-        <span id="activity-count" style="margin-left:auto;font-size:10px;font-weight:600;padding:1px 7px;border-radius:10px;background:var(--blue-bg);color:var(--blue-t);">0</span>
-      </div>
-      <div id="dr-activity" class="detail-right-body" style="flex:1;overflow-y:auto;padding:12px 14px;">
-        <div id="activity-feed"></div>
-      </div>
-      <div class="comment-form">
-        <textarea class="comment-input" id="comment-input" rows="2" placeholder="Ajouter un commentaire…"></textarea>
-        <button class="comment-send" onclick="addComment()">Envoyer</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="notif" id="notif"></div>
-
-<!-- Datalists statiques -->
-<datalist id="tiers-datalist">
-  <option value="CAT"><option value="CEVA"><option value="WTW"><option value="Helvetia">
-  <option value="Scania"><option value="Renault Trucks"><option value="Volvo Trucks">
-  <option value="DAF"><option value="Mercedes"><option value="MAN"><option value="Autre">
-</datalist>
-<!-- Input file statique — hors du DOM dynamique pour éviter les problèmes de sécurité navigateur -->
-<input type="file" id="file-input-static" style="display:none;position:fixed;top:-9999px" multiple onchange="handleFileInputMain(this)"/>
-
-
-
-
-
 </body>
 </html>
