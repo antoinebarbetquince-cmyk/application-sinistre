@@ -2991,7 +2991,10 @@ function saveNew(){
     factures:getFacturesFromList('nf-factures-list'),
     // legacy fields
     dfact:'',nfact:'',dpaiement:'',
-    dmalus:'',nmalus:'',mmalus:0,dpmalus:'',
+    dmalus:toFR(document.getElementById('nf-dmalus').value),
+    nmalus:document.getElementById('nf-nmalus').value,
+    mmalus:parseFloat(document.getElementById('nf-mmalus').value)||0,
+    dpmalus:toFR(document.getElementById('nf-dpmalus').value),
     revente:parseFloat(document.getElementById('nf-revente').value)||0,
     drevente:toFR(document.getElementById('nf-drevente').value),
     rbt:parseFloat(document.getElementById('nf-rbt').value)||0,
