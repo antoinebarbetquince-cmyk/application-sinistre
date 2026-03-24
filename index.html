@@ -1394,6 +1394,244 @@ tr:hover td{background:#FAFAF9;}
 
 
 
+<script>
+(function() {
+  var CDNS = [
+    'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.49.2/umd/supabase.min.js'
+  ];
+  var tried = 0;
+  function tryLoad(idx) {
+    if (idx >= CDNS.length) {
+      console.error('Tous les CDN Supabase ont échoué.');
+      var err = document.getElementById('login-err');
+      if(err){err.style.display='block';err.textContent='Erreur réseau : impossible de charger Supabase. Vérifiez votre connexion.';}
+      return;
+    }
+    var s = document.createElement('script');
+    s.src = CDNS[idx];
+    s.onload = function() {
+
+
+/* ============================================================
+   SUPABASE — Intégration complète
+   ============================================================ */
+const SUPABASE_URL = "https://omhromorqpijinwmschk.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9taHJvbW9ycXBpamlud21zY2hrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzE3NDMsImV4cCI6MjA4OTk0Nzc0M30.M_r9p1Z69_xNj_HGihGV5kwf1NwOGrZL6-19M0OvNno";
+const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const USER_META = {
+  'amelie.nussbaum@transportsquince.fr': {name:'Amélie Nussbaum', role:'Gestionnaire sinistres', av:'AN', bg:'#FEF0E7', color:'#B84A07'},
+  'ophelie.gillot@transportsquince.fr':  {name:'Ophélie Gillot',  role:'Responsable fleet',    av:'OG', bg:'#E6F4EC', color:'#145C32'},
+  'comptabilite@transportsquince.fr':    {name:'Comptabilité',    role:'Comptabilité',          av:'CT', bg:'#EEF2FF', color:'#1B4FD8'},
+};
+
+function dbToApp(row){
+  return {
+    archive:row.archive,date:row.date||'',entite:row.entite||'',
+    type_sinistre:row.type_sinistre||'Flotte',conducteur:row.conducteur||'',
+    immat:row.immat||'',affreteur:row.affreteur||'',ldv:row.ldv||'',
+    chassis:row.chassis||'',nref:row.nref||'',etat:row.etat||'en-cours',
+    franchise:row.franchise||0,chiffrage:row.chiffrage||0,
+    factures:row.factures||[],rbt:row.rbt||0,drbt:row.drbt||'',
+    revente:row.revente||0,drevente:row.drevente||'',rbtList:row.rbt_list||[],
+    mmalus:row.mmalus||0,dmalus:row.dmalus||'',nmalus:row.nmalus||'',
+    dpmalus:row.dpmalus||'',contest:row.contest||'',expertise:row.expertise||'',
+    obs:row.obs||'',obsList:row.obs_list||[],lien:row.lien||'',
+    dfact:row.dfact||'',nfact:row.nfact||'',dpaiement:row.dpaiement||'',presc:0,
+  };
+}
+
+function appToDB(d){
+  return {
+    archive:d.archive,date:d.date,entite:d.entite||null,
+    type_sinistre:d.type_sinistre||null,conducteur:d.conducteur,
+    immat:d.immat||null,affreteur:d.affreteur||null,ldv:d.ldv||null,
+    chassis:d.chassis||null,nref:d.nref||null,etat:d.etat||'en-cours',
+    franchise:d.franchise||0,chiffrage:d.chiffrage||0,
+    factures:d.factures||[],rbt:d.rbt||0,drbt:d.drbt||null,
+    revente:d.revente||0,drevente:d.drevente||null,rbt_list:d.rbtList||[],
+    mmalus:d.mmalus||0,dmalus:d.dmalus||null,nmalus:d.nmalus||null,
+    dpmalus:d.dpmalus||null,contest:d.contest||null,expertise:d.expertise||null,
+    obs:d.obs||null,obs_list:d.obsList||[],lien:d.lien||null,
+  };
+}
+
+async function sbSaveSinistre(d){
+  const row=appToDB(d);
+  const{error}=await _sb.from('sinistres').upsert(row,{onConflict:'archive'});
+  if(error){
+    console.error('Supabase save error détaillé:',JSON.stringify(error));
+    console.error('Row envoyé:',JSON.stringify(row));
+    showNotif('❌ Erreur: '+error.message);
+    return false;
+  }
+  return true;
+}
+
+async function sbSaveRelance(r){
+  const isNumId=typeof r.id==='number';
+  const row={
+    ...(isNumId?{}:{id:r.id}),
+    titre:r.titre,type:r.type,priorite:r.priorite,
+    archive:r.archive||null,entite:r.entite||null,responsable:r.responsable,
+    echeance:r.echeance,description:r.desc||null,statut:r.statut||'À faire',
+    cree_le:r.creeLe||null,cree_par:r.creePar||null,
+  };
+  const{data,error}=await _sb.from('relances').upsert(row).select().single();
+  if(error){console.error('Supabase relance error:',error);return null;}
+  return data;
+}
+
+async function loadAllFromSupabase(){
+  try{
+    showNotif('⏳ Chargement…');
+    const[{data:sins,error:e1},{data:rels,error:e2}]=await Promise.all([
+      _sb.from('sinistres').select('*').order('created_at',{ascending:false}),
+      _sb.from('relances').select('*').order('echeance',{ascending:true}),
+    ]);
+    if(e1)throw e1;
+    if(e2)throw e2;
+    DATA=(sins||[]).map(dbToApp);
+    filteredData=[...DATA];
+    RELANCES=(rels||[]).map(r=>({
+      id:r.id,titre:r.titre,type:r.type,priorite:r.priorite,
+      archive:r.archive||'',entite:r.entite||'',responsable:r.responsable,
+      echeance:r.echeance,desc:r.description||'',statut:r.statut||'À faire',
+      creeLe:r.cree_le||'',creePar:r.cree_par||'',
+    }));
+    // Repopuler dropdowns conducteurs
+    const conds=[...new Set(DATA.map(d=>d.conducteur).filter(Boolean))].sort();
+    ['f-conducteur-filter','df-cond'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el)return;
+      // Keep first option, remove rest
+      while(el.options.length>1)el.remove(1);
+      conds.forEach(c=>el.innerHTML+=`<option value="${c}">${c}</option>`);
+    });
+    const dl=document.getElementById('conducteurs-list');
+    if(dl){dl.innerHTML='';conds.forEach(c=>dl.innerHTML+=`<option value="${c}">`);}
+    renderDash();renderList();renderRelanceStat();
+    showNotif('✓ '+DATA.length+' sinistre(s) chargé(s).');
+  }catch(err){
+    console.error('Erreur chargement:',err);
+    showNotif('❌ Erreur: '+err.message);
+  }
+}
+
+function loginSuccess_sb(email){
+  const meta=USER_META[email]||{name:email.split('@')[0],role:'Utilisateur',av:'U',bg:'#EEF2FF',color:'#1B4FD8'};
+  currentUser={id:email,...meta};
+  document.getElementById('login-screen').classList.remove('open');
+  document.querySelector('.user-av').style.background=meta.bg;
+  document.querySelector('.user-av').style.color=meta.color;
+  document.querySelector('.user-av').textContent=meta.av;
+  document.querySelector('.user-name').textContent=meta.name;
+  document.querySelector('.user-role').textContent=meta.role;
+  // Ajouter bouton déconnexion si pas déjà là
+  const foot=document.querySelector('.sb-foot');
+  if(foot&&!foot.querySelector('.btn-logout')){
+    foot.innerHTML+=`<div style="margin-top:8px;"><button class="btn btn-sm btn-logout" onclick="doLogout()" style="width:100%;font-size:11px;">Se déconnecter</button></div>`;
+  }
+}
+
+// ── Override doLogin ─────────────────────────────────────────
+window.doLogin = async function(){
+  const email=document.getElementById('login-user').value.trim().toLowerCase();
+  const pw=document.getElementById('login-pass').value;
+  const errEl=document.getElementById('login-err');
+  errEl.style.display='none';
+  const{data,error}=await _sb.auth.signInWithPassword({email,password:pw});
+  if(error){errEl.style.display='block';errEl.textContent='Email ou mot de passe incorrect.';return;}
+  loginSuccess_sb(email);
+  await loadAllFromSupabase();
+};
+
+// ── Override doLogout ────────────────────────────────────────
+window.doLogout = async function(){
+  await _sb.auth.signOut();
+  currentUser=null;DATA=[];filteredData=[];RELANCES=[];
+  document.getElementById('login-screen').classList.add('open');
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-err').style.display='none';
+  closeDetail();
+};
+
+// ── Patcher saveNew ──────────────────────────────────────────
+const _orig_saveNew=window.saveNew;
+window.saveNew=async function(){
+  _orig_saveNew.call(this);
+  const s=DATA[0];
+  if(s){const ok=await sbSaveSinistre(s);if(ok)showNotif('✓ Sinistre '+s.archive+' sauvegardé.');}
+};
+
+// ── Patcher saveEdit ─────────────────────────────────────────
+const _orig_saveEdit=window.saveEdit;
+window.saveEdit=async function(){
+  _orig_saveEdit.call(this);
+  const d=DATA[currentDetailIdx];
+  if(d)await sbSaveSinistre(d);
+};
+
+// ── Patcher ieSave ───────────────────────────────────────────
+const _orig_ieSave=window.ieSave;
+window.ieSave=async function(sec){
+  _orig_ieSave.call(this,sec);
+  const d=DATA[currentDetailIdx];
+  if(d)await sbSaveSinistre(d);
+};
+
+// ── Patcher observations ─────────────────────────────────────
+const _orig_dpObsAdd=window.dpObsAdd;
+window.dpObsAdd=async function(){_orig_dpObsAdd.call(this);const d=DATA[currentDetailIdx];if(d)await sbSaveSinistre(d);};
+const _orig_dpObsDel=window.dpObsDel;
+window.dpObsDel=async function(i){_orig_dpObsDel.call(this,i);const d=DATA[currentDetailIdx];if(d)await sbSaveSinistre(d);};
+const _orig_dpObsEditSave=window.dpObsEditSave;
+window.dpObsEditSave=async function(i){_orig_dpObsEditSave.call(this,i);const d=DATA[currentDetailIdx];if(d)await sbSaveSinistre(d);};
+
+// ── Patcher relances ─────────────────────────────────────────
+const _orig_saveRelance=window.saveRelance;
+window.saveRelance=async function(){
+  const editingId=rlEditId;
+  _orig_saveRelance.call(this);
+  const r=editingId?RELANCES.find(x=>x.id===editingId):RELANCES[0];
+  if(r){const saved=await sbSaveRelance(r);if(saved&&!editingId&&r)r.id=saved.id;}
+};
+const _orig_closeRelance=window.closeRelance;
+window.closeRelance=async function(id){
+  _orig_closeRelance.call(this,id);
+  const r=RELANCES.find(x=>x.id===id);
+  if(r)await sbSaveRelance(r);
+};
+const _orig_deleteRelance=window.deleteRelance;
+window.deleteRelance=async function(id){
+  const{error}=await _sb.from('relances').delete().eq('id',id);
+  if(error)console.error('Delete relance error:',error);
+  _orig_deleteRelance.call(this,id);
+};
+
+// ── Vérifier session existante ───────────────────────────────
+(async function(){
+  const{data}=await _sb.auth.getSession();
+  if(data.session){
+    loginSuccess_sb(data.session.user.email);
+    await loadAllFromSupabase();
+  }
+})();
+
+  
+    };
+    s.onerror = function() {
+      console.warn('CDN ' + CDNS[idx] + ' échoué, essai suivant...');
+      tryLoad(idx + 1);
+    };
+    document.head.appendChild(s);
+  }
+  tryLoad(0);
+})();
+</script>
 </body>
 </html></head>YPE html>
 <html lang="fr">
@@ -2258,7 +2496,6 @@ tr:hover td{background:#FAFAF9;}
 </datalist>
 <!-- Input file statique — hors du DOM dynamique pour éviter les problèmes de sécurité navigateur -->
 <input type="file" id="file-input-static" style="display:none;position:fixed;top:-9999px" multiple onchange="handleFileInputMain(this)"/>
-<script src="supabase.min.js"></script>
 <script>
 /* ============================================================
    AUTH — Système d'identification
@@ -5015,7 +5252,13 @@ function init(){
 }
 init();
 </script>
+
 <script>
+(function() {
+  var s = document.createElement('script');
+  s.src = 'supabase.min.js';
+  s.onload = function() {
+
 /* ============================================================
    SUPABASE — Intégration complète
    ============================================================ */
@@ -5221,6 +5464,15 @@ window.deleteRelance=async function(id){
     loginSuccess_sb(data.session.user.email);
     await loadAllFromSupabase();
   }
+})();
+
+  };
+  s.onerror = function() {
+    console.error('Impossible de charger supabase.min.js — vérifiez que le fichier est dans le même dossier.');
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('login-err').textContent='Erreur : supabase.min.js introuvable dans le dossier.';
+  };
+  document.head.appendChild(s);
 })();
 </script>
 </body>
