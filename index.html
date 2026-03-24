@@ -2544,6 +2544,7 @@ function saveEdit(){
       ts:tsNow(),
       comment:changes.join('\n')
     });
+  sbSaveActivite(archive, SINISTRE_ACTIVITY[archive][0]);
     AUDIT_LOG.unshift({user:currentUser.name,av:currentUser.av,cls:'md',action:`A modifié ${changes.length} champ(s) sur le dossier`,archive,champ:'Modification',ts:tsNow()});
   }
 
@@ -2563,17 +2564,56 @@ function exportSingleCSV(){
 }
 
 /* ===== ACTIVITY FEED ===== */
-function renderActivityFeed(archive){
-  const acts=SINISTRE_ACTIVITY[archive]||[];
+
+function sbPushActivity(archive, entry){
+  if(!SINISTRE_ACTIVITY[archive])SINISTRE_ACTIVITY[archive]=[];
+  SINISTRE_ACTIVITY[archive].unshift(entry);
+  sbSaveActivite(archive, entry);
+}
+async function sbSaveActivite(archive, entry){
+  const{error}=await _sb.from('activite').insert({
+    archive,
+    user_name: entry.user,
+    user_av:   entry.av,
+    action:    entry.action,
+    comment:   entry.comment||null,
+    ts:        entry.ts,
+  });
+  if(error)console.error('Activité Supabase error:',error);
+}
+
+async function loadActiviteFromSupabase(archive){
+  const{data,error}=await _sb.from('activite')
+    .select('*')
+    .eq('archive',archive)
+    .order('created_at',{ascending:false});
+  if(error){console.error('Load activité error:',error);return[];}
+  return(data||[]).map(r=>({
+    user:r.user_name,av:r.user_av||'?',
+    bg:USER_META[currentUser?.id]?.bg||'#EEF2FF',
+    color:USER_META[currentUser?.id]?.color||'#1B4FD8',
+    action:r.action,comment:r.comment||'',ts:r.ts,
+  }));
+}
+
+async function renderActivityFeed(archive){
+  // Fusionner mémoire + Supabase
+  const fromDB=await loadActiviteFromSupabase(archive);
+  const fromMem=SINISTRE_ACTIVITY[archive]||[];
+  // Dédoublonner par ts+action
+  const seen=new Set(fromDB.map(a=>a.ts+'|'+a.action));
+  const merged=[...fromDB,...fromMem.filter(a=>!seen.has(a.ts+'|'+a.action))];
+  SINISTRE_ACTIVITY[archive]=merged;
+
   const badge=document.getElementById('activity-count');
-  if(badge)badge.textContent=acts.length;
-  if(!acts.length){
+  if(badge)badge.textContent=merged.length;
+  if(!merged.length){
     document.getElementById('activity-feed').innerHTML=`<div style="text-align:center;padding:30px 10px;color:var(--text3);font-size:12px;">Aucune activité enregistrée.<br><span style="font-size:10px;">Les modifications et commentaires apparaîtront ici.</span></div>`;
     return;
   }
-  document.getElementById('activity-feed').innerHTML=[...acts].reverse().map(a=>`
+  document.getElementById('activity-feed').innerHTML=merged.map(a=>`
     <div class="activity-entry">
-      <div class="act-av" style="background:${a.bg};color:${a.color}">${a.av}</div>
+      <div class="act-av" style="background:${a.bg||'#EEF2FF'};color:${a.color||'#1B4FD8'}">${a.av}</div>
       <div class="act-body">
         <div class="act-who">${a.user}</div>
         <div class="act-what">${a.action}</div>
@@ -2582,17 +2622,19 @@ function renderActivityFeed(archive){
       </div>
     </div>`).join('');
 }
-function addComment(){
+
+async function addComment(){
   if(!currentUser){showNotif('Veuillez vous connecter.');return;}
   const txt=document.getElementById('comment-input').value.trim();
   if(!txt)return;
   const archive=DATA[currentDetailIdx].archive;
-  if(!SINISTRE_ACTIVITY[archive])SINISTRE_ACTIVITY[archive]=[];
-  SINISTRE_ACTIVITY[archive].push({
+  const entry={
     user:currentUser.name,av:currentUser.av,bg:currentUser.bg,color:currentUser.color,
-    action:'Commentaire',ts:tsNow(),comment:txt
-  });
-  // also push to global audit
+    action:'Commentaire',ts:tsNow(),comment:txt,
+  };
+  if(!SINISTRE_ACTIVITY[archive])SINISTRE_ACTIVITY[archive]=[];
+  SINISTRE_ACTIVITY[archive].unshift(entry);
+  await sbSaveActivite(archive,entry);
   AUDIT_LOG.unshift({user:currentUser.name,av:currentUser.av,cls:'md',action:'Commentaire sur le dossier',archive,champ:'Commentaire',ts:tsNow()});
   document.getElementById('comment-input').value='';
   renderActivityFeed(archive);
@@ -2640,6 +2682,7 @@ function deleteDocMain(archive,idx){
   renderDocsListMain(archive);
   if(currentUser){if(!SINISTRE_ACTIVITY[archive])SINISTRE_ACTIVITY[archive]=[];
     SINISTRE_ACTIVITY[archive].push({user:currentUser.name,av:currentUser.av,bg:currentUser.bg,color:currentUser.color,action:'Document supprimé',ts:tsNow(),comment:name});
+  sbSaveActivite(archive, SINISTRE_ACTIVITY[archive][0]);
     renderActivityFeed(archive);}
 }
 function handleFileInputMain(input){
@@ -2666,6 +2709,7 @@ function addDocMain(archive,file,category){
   if(currentUser){if(!SINISTRE_ACTIVITY[archive])SINISTRE_ACTIVITY[archive]=[];
     SINISTRE_ACTIVITY[archive].push({user:currentUser.name,av:currentUser.av,bg:currentUser.bg,color:currentUser.color,
       action:`Document ajouté — ${CAT_ICONS[cat]||'📎'} ${cat}`,ts:tsNow(),comment:file.name+' ('+sz+')'});
+  sbSaveActivite(archive, SINISTRE_ACTIVITY[archive][0]);
     renderActivityFeed(archive);}
   showNotif(`✓ "${file.name}" ajouté dans "${cat}".`);
 }
@@ -3231,6 +3275,7 @@ function saveRelance(){
       if(!SINISTRE_ACTIVITY[r.archive])SINISTRE_ACTIVITY[r.archive]=[];
       const u=currentUser||{name:'Système',av:'SY',bg:'#1E1C1A',color:'#E8A870'};
       SINISTRE_ACTIVITY[r.archive].push({user:u.name,av:u.av,bg:u.bg,color:u.color,action:`Relance créée — ${r.type}`,ts:tsNow(),comment:r.titre});
+  sbSaveActivite(r.archive, SINISTRE_ACTIVITY[r.archive][0]);
     }
   }
   closeRlModal();
@@ -3263,6 +3308,7 @@ function closeRelance(id){
     if(!SINISTRE_ACTIVITY[r.archive])SINISTRE_ACTIVITY[r.archive]=[];
     const u=currentUser||{name:'Système',av:'SY',bg:'#1E1C1A',color:'#E8A870'};
     SINISTRE_ACTIVITY[r.archive].push({user:u.name,av:u.av,bg:u.bg,color:u.color,action:`Relance clôturée — ${r.type}`,ts:tsNow(),comment:r.titre});
+  sbSaveActivite(r.archive, SINISTRE_ACTIVITY[r.archive][0]);
   }
   if(document.getElementById('sec-relances')&&document.getElementById('sec-relances').classList.contains('active'))renderRelances();
   renderRelanceStat();
@@ -3406,6 +3452,7 @@ function ieSave(sec){
     SINISTRE_ACTIVITY[arch].push({user:u.name,av:u.av,bg:u.bg,color:u.color,
       action:'Modification rapide — '+sec.toUpperCase(),ts:tsNow(),
       comment:changes.join(' | ')});
+  sbSaveActivite(arch, SINISTRE_ACTIVITY[arch][0]);
     renderActivityFeed(arch);
   }
 
@@ -3491,6 +3538,7 @@ function dpObsAdd(){
   if(!SINISTRE_ACTIVITY[archive])SINISTRE_ACTIVITY[archive]=[];
   SINISTRE_ACTIVITY[archive].push({user:u.name,av:u.av,bg:u.bg,color:u.color,
     action:'Observation ajoutée',ts:tsNow(),comment:text.substring(0,120)+(text.length>120?'…':'')});
+  sbSaveActivite(archive, SINISTRE_ACTIVITY[archive][0]);
   renderActivityFeed(archive);
   ta.value='';
   renderObsList(d);
@@ -3554,6 +3602,7 @@ function dpObsEditSave(idx){
   if(!SINISTRE_ACTIVITY[archive])SINISTRE_ACTIVITY[archive]=[];
   SINISTRE_ACTIVITY[archive].push({user:u.name,av:u.av,bg:u.bg,color:u.color,
     action:'Observation modifiée',ts:tsNow(),comment:newText.substring(0,100)+(newText.length>100?'…':'')});
+  sbSaveActivite(archive, SINISTRE_ACTIVITY[archive][0]);
   renderActivityFeed(archive);
   renderObsList(d);
   showNotif('✓ Observation modifiée.');
