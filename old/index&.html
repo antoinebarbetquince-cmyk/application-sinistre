@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>QuincéSinistre - Accès Sécurisé</title>
+    <style>
+        :root {
+            --primary: #0f172a; --accent: #3b82f6; --error: #ef4444;
+            --bg: #f1f5f9; --white: #ffffff;
+        }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); }
+        
+        /* --- ÉCRAN DE CONNEXION --- */
+        #auth-container { 
+            display: flex; align-items: center; justify-content: center; 
+            height: 100vh; width: 100vw; position: fixed; z-index: 9999; background: var(--primary);
+        }
+        .login-card { 
+            background: white; padding: 40px; border-radius: 12px; width: 380px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center;
+        }
+        .logo { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 10px; }
+        .logo span { color: var(--accent); }
+        
+        .field { text-align: left; margin-bottom: 20px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 5px; }
+        input { 
+            width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; 
+            box-sizing: border-box; font-size: 15px;
+        }
+        input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+        
+        .btn-login { 
+            width: 100%; padding: 14px; background: var(--accent); color: white; 
+            border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s;
+        }
+        .btn-login:hover { background: #2563eb; transform: translateY(-1px); }
+        
+        #err-msg { color: var(--error); font-size: 14px; margin-top: 15px; display: none; padding: 10px; background: #fef2f2; border-radius: 6px; }
+
+        /* --- INTERFACE PRINCIPALE (Masquée par défaut) --- */
+        #app-interface { display: none; height: 100vh; flex-direction: row; }
+        .sidebar { width: 260px; background: var(--primary); color: white; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #cbd5e1; padding-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<!-- BLOC AUTHENTIFICATION -->
+<div id="auth-container">
+    <div class="login-card">
+        <div class="logo">QUINCÉ<span>Sinistre</span></div>
+        <p style="color: #64748b; margin-bottom: 30px;">Veuillez vous connecter pour accéder au registre.</p>
+        
+        <div class="field">
+            <label>Identifiant professionnel</label>
+            <input type="text" id="user-mail" placeholder="amelie.nussbaum@transportsquince.fr">
+        </div>
+        
+        <div class="field">
+            <label>Mot de passe</label>
+            <input type="password" id="user-pass" placeholder="••••••••">
+        </div>
+        
+        <button class="btn-login" onclick="attemptLogin()">Se connecter</button>
+        <div id="err-msg">Identifiants incorrects. Veuillez réessayer.</div>
+    </div>
+</div>
+
+<!-- BLOC APPLICATION (S'affiche après succès) -->
+<div id="app-interface">
+    <div class="sidebar">
+        <div style="padding: 25px; font-weight: 800; border-bottom: 1px solid #1e293b;">MENU GESTION</div>
+        <nav style="padding: 20px 0;">
+            <div style="padding: 15px 25px; cursor: pointer; background: rgba(255,255,255,0.05);">📊 Tableau de bord</div>
+            <div style="padding: 15px 25px; cursor: pointer;">📋 Liste Sinistres</div>
+            <div style="padding: 15px 25px; cursor: pointer;">➕ Nouveau Dossier</div>
+            <div style="padding: 15px 25px; cursor: pointer; margin-top: 50px; color: #94a3b8;" onclick="logout()">🚪 Déconnexion</div>
+        </nav>
+    </div>
+    
+    <div class="main-content">
+        <div class="top-bar">
+            <h1 style="margin:0; font-size: 24px;">Bienvenue, <span id="display-name">Utilisateur</span></h1>
+            <div id="current-date" style="font-weight: 600; color: var(--accent);"></div>
+        </div>
+        
+        <div id="content-area">
+            <p>Chargement des données de sinistres en cours...</p>
+            <!-- Ici viendra votre logique de liste/formulaire -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Configuration des accès (En dur pour garantir le fonctionnement sans BDD externe)
+    const ACCESS_DATABASE = {
+        "amelie.nussbaum@transportsquince.fr": { pass: "Spe956!#àLpaf", name: "Amélie Nussbaum" },
+        "marie.dupont@transportsquince.fr": { pass: "admin", name: "Marie Dupont" }
+    };
+
+    /**
+     * TENTATIVE DE CONNEXION
+     */
+    function attemptLogin() {
+        const mail = document.getElementById('user-mail').value;
+        const pass = document.getElementById('user-pass').value;
+        const errorBox = document.getElementById('err-msg');
+
+        // Vérification
+        if (ACCESS_DATABASE[mail] && ACCESS_DATABASE[mail].pass === pass) {
+            // Succès
+            const user = ACCESS_DATABASE[mail];
+            sessionStorage.setItem('quince_session', JSON.stringify({
+                logged: true,
+                name: user.name,
+                mail: mail,
+                time: new Date().getTime()
+            }));
+            
+            showApp(user.name);
+        } else {
+            // Échec
+            errorBox.style.display = 'block';
+            // Animation de secousse pour l'erreur
+            document.querySelector('.login-card').animate([
+                { transform: 'translateX(0px)' },
+                { transform: 'translateX(-10px)' },
+                { transform: 'translateX(10px)' },
+                { transform: 'translateX(0px)' }
+            ], { duration: 200 });
+        }
+    }
+
+    /**
+     * AFFICHER L'INTERFACE APPRÈS AUTH
+     */
+    function showApp(userName) {
+        document.getElementById('auth-container').style.display = 'none';
+        document.getElementById('app-interface').style.display = 'flex';
+        document.getElementById('display-name').innerText = userName;
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('fr-FR', {
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        });
+    }
+
+    /**
+     * DÉCONNEXION
+     */
+    function logout() {
+        sessionStorage.removeItem('quince_session');
+        location.reload(); // Relance tout pour verrouiller l'accès
+    }
+
+    /**
+     * VÉRIFICATION AUTO AU CHARGEMENT (Persistance de session)
+     */
+    window.onload = function() {
+        const session = JSON.parse(sessionStorage.getItem('quince_session'));
+        if (session && session.logged) {
+            // Vérifier si la session n'est pas trop vieille (ex: 4 heures)
+            const now = new Date().getTime();
+            if (now - session.time < (4 * 60 * 60 * 1000)) {
+                showApp(session.name);
+            } else {
+                logout();
+            }
+        }
+    };
+</script>
+
+</body>
+</html>
