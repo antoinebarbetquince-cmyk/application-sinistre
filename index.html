@@ -2647,13 +2647,32 @@ const CAT_ICONS={'Facture':'📄','Devis':'📋','Rapport expertise':'🔍','Let
 function docIconCls(name){const ext=(name.split('.').pop()||'').toLowerCase();return{pdf:'pdf',jpg:'img',jpeg:'img',png:'img',gif:'img',xlsx:'xls',xls:'xls',csv:'xls',docx:'doc',doc:'doc'}[ext]||'oth';}
 function docIconLbl(cls){return{pdf:'PDF',img:'IMG',xls:'XLS',doc:'DOC',oth:'…'}[cls];}
 
-function renderDocsListMain(archive){
+/* ===== DOCUMENTS — Supabase Storage + visualisation ===== */
+
+// Charger les documents depuis Supabase
+async function loadDocsFromSupabase(archive){
+  const{data,error}=await _sb.from('documents')
+    .select('*').eq('archive',archive).order('created_at',{ascending:false});
+  if(error){console.error('Load docs error:',error);return[];}
+  SINISTRE_DOCS[archive]=(data||[]).map(r=>({
+    id:r.id,name:r.name,size:r.size,category:r.category,
+    uploadedBy:r.uploaded_by,uploadedAt:r.uploaded_at,
+    storagePath:r.storage_path,
+  }));
+  return SINISTRE_DOCS[archive];
+}
+
+async function renderDocsListMain(archive){
   const el=document.getElementById('docs-list-main');if(!el)return;
-  const docs=SINISTRE_DOCS[archive]||[];
+  // Charger depuis Supabase à chaque ouverture
+  const docs=await loadDocsFromSupabase(archive);
   const badge=document.getElementById('docs-count-badge');
   if(badge)badge.textContent=docs.length+' doc'+(docs.length>1?'s':'');
-  if(!docs.length){el.innerHTML=`<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">Aucun document joint — glissez des fichiers ou cliquez "Ajouter".</div>`;return;}
-  // Group by category
+  if(!docs.length){
+    el.innerHTML=`<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">Aucun document joint — glissez des fichiers ou cliquez "Ajouter".</div>
+    <div id="doc-viewer" style="display:none;"></div>`;
+    return;
+  }
   const grouped={};
   docs.forEach((d,i)=>{const cat=d.category||'Autre';if(!grouped[cat])grouped[cat]=[];grouped[cat].push({...d,_idx:i});});
   let html='';
@@ -2666,32 +2685,101 @@ function renderDocsListMain(archive){
         <span style="font-size:9px;font-weight:600;background:var(--surface3);padding:1px 6px;border-radius:8px;margin-left:4px;">${grouped[cat].length}</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:7px;">
-      ${grouped[cat].map(doc=>{const icn=docIconCls(doc.name);return`<div class="doc-item" style="cursor:default;background:var(--surface2);">
-          <div class="doc-icon ${icn}">${docIconLbl(icn)}</div>
-          <div class="doc-info"><div class="doc-name" title="${doc.name}">${doc.name}</div><div class="doc-meta">${doc.size} · ${doc.uploadedBy}<br>${doc.uploadedAt}</div></div>
-          <span class="doc-del" onclick="deleteDocMain('${archive}',${doc._idx})" title="Supprimer">✕</span>
-        </div>`;}).join('')}
+      ${grouped[cat].map(doc=>{
+        const icn=docIconCls(doc.name);
+        const canPreview=icn==='pdf'||icn==='img';
+        return`<div class="doc-item" style="background:var(--surface2);">
+          <div class="doc-icon ${icn}" style="cursor:default">${docIconLbl(icn)}</div>
+          <div class="doc-info" style="cursor:${canPreview?'pointer':'default'}" onclick="${canPreview?`previewDoc('${archive}',${doc._idx})`:''}">
+            <div class="doc-name" title="${doc.name}">${doc.name}</div>
+            <div class="doc-meta">${doc.size} · ${doc.uploadedBy||'—'}<br>${doc.uploadedAt||'—'}</div>
+            ${canPreview?'<div style="font-size:9px;color:var(--accent);margin-top:2px;">👁 Aperçu</div>':''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+            <span class="doc-del" onclick="downloadDoc('${archive}',${doc._idx})" title="Télécharger" style="color:var(--accent);">↓</span>
+            <span class="doc-del" onclick="deleteDocMain('${archive}',${doc._idx})" title="Supprimer">✕</span>
+          </div>
+        </div>`;
+      }).join('')}
       </div></div>`;
   });
+  // Volet visualisation
+  html+=`<div id="doc-viewer" style="display:none;margin-top:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);">
+      <span id="doc-viewer-name" style="font-size:12px;font-weight:600;color:var(--text);">—</span>
+      <button onclick="closeDocViewer()" style="font-family:'DM Sans',sans-serif;font-size:11px;padding:3px 9px;border-radius:4px;border:1px solid var(--border2);background:var(--surface);cursor:pointer;">✕ Fermer</button>
+    </div>
+    <div id="doc-viewer-body" style="max-height:600px;overflow:auto;"></div>
+  </div>`;
   el.innerHTML=html;
 }
-function deleteDocMain(archive,idx){
-  if(!confirm('Supprimer ce document ?'))return;
-  const name=SINISTRE_DOCS[archive][idx].name;
-  SINISTRE_DOCS[archive].splice(idx,1);
-  renderDocsListMain(archive);
-  if(currentUser){if(!SINISTRE_ACTIVITY[archive])SINISTRE_ACTIVITY[archive]=[];
-    SINISTRE_ACTIVITY[archive].push({user:currentUser.name,av:currentUser.av,bg:currentUser.bg,color:currentUser.color,action:'Document supprimé',ts:tsNow(),comment:name});
-  sbSaveActivite(archive, SINISTRE_ACTIVITY[archive][0]);
-    renderActivityFeed(archive);}
+
+async function previewDoc(archive,idx){
+  const doc=SINISTRE_DOCS[archive]&&SINISTRE_DOCS[archive][idx];
+  if(!doc||!doc.storagePath)return;
+  const viewer=document.getElementById('doc-viewer');
+  const viewerName=document.getElementById('doc-viewer-name');
+  const viewerBody=document.getElementById('doc-viewer-body');
+  if(!viewer)return;
+  viewerName.textContent=doc.name;
+  viewerBody.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px;">⏳ Chargement…</div>';
+  viewer.style.display='block';
+  viewer.scrollIntoView({behavior:'smooth',block:'start'});
+  // Obtenir URL signée (valide 1h)
+  const{data,error}=await _sb.storage.from('documents').createSignedUrl(doc.storagePath,3600);
+  if(error||!data){viewerBody.innerHTML='<div style="padding:20px;text-align:center;color:var(--red);">Erreur de chargement</div>';return;}
+  const url=data.signedUrl;
+  const icn=docIconCls(doc.name);
+  if(icn==='pdf'){
+    viewerBody.innerHTML=`<iframe src="${url}" style="width:100%;height:580px;border:none;" title="${doc.name}"></iframe>`;
+  } else if(icn==='img'){
+    viewerBody.innerHTML=`<div style="padding:12px;text-align:center;background:#1E1C1A;">
+      <img src="${url}" alt="${doc.name}" style="max-width:100%;max-height:560px;border-radius:6px;object-fit:contain;"/>
+    </div>`;
+  }
 }
+
+async function downloadDoc(archive,idx){
+  const doc=SINISTRE_DOCS[archive]&&SINISTRE_DOCS[archive][idx];
+  if(!doc||!doc.storagePath)return;
+  const{data,error}=await _sb.storage.from('documents').createSignedUrl(doc.storagePath,60);
+  if(error||!data){showNotif('❌ Erreur téléchargement');return;}
+  const a=document.createElement('a');a.href=data.signedUrl;a.download=doc.name;a.click();
+}
+
+function closeDocViewer(){
+  const v=document.getElementById('doc-viewer');if(v)v.style.display='none';
+}
+
+async function deleteDocMain(archive,idx){
+  const doc=SINISTRE_DOCS[archive]&&SINISTRE_DOCS[archive][idx];
+  if(!doc)return;
+  if(!confirm('Supprimer "'+doc.name+'" ?'))return;
+  // Supprimer du Storage
+  if(doc.storagePath){
+    const{error:storErr}=await _sb.storage.from('documents').remove([doc.storagePath]);
+    if(storErr)console.warn('Storage delete warn:',storErr);
+  }
+  // Supprimer de la table
+  if(doc.id){
+    const{error}=await _sb.from('documents').delete().eq('id',doc.id);
+    if(error){showNotif('❌ Erreur suppression');return;}
+  }
+  SINISTRE_DOCS[archive].splice(idx,1);
+  const entry={user:currentUser.name,av:currentUser.av,bg:currentUser.bg,color:currentUser.color,action:'Document supprimé',ts:tsNow(),comment:doc.name};
+  if(!SINISTRE_ACTIVITY[archive])SINISTRE_ACTIVITY[archive]=[];
+  SINISTRE_ACTIVITY[archive].unshift(entry);
+  sbSaveActivite(archive,entry);
+  renderActivityFeed(archive);
+  renderDocsListMain(archive);
+  showNotif('✓ Document supprimé.');
+}
+
 function handleFileInputMain(input){
-  const archive=DATA[currentDetailIdx]&&DATA[currentDetailIdx].archive;if(!archive){return;}
+  const archive=DATA[currentDetailIdx]&&DATA[currentDetailIdx].archive;if(!archive)return;
   const catEl=document.getElementById('doc-category');
   const cat=(catEl&&catEl.value)||'Autre';
-  if(input.files&&input.files.length){
-    [...input.files].forEach(f=>addDocMain(archive,f,cat));
-  }
+  if(input.files&&input.files.length)[...input.files].forEach(f=>addDocMain(archive,f,cat));
   input.value='';
 }
 function handleDrop(e){
@@ -2700,18 +2788,44 @@ function handleDrop(e){
   const cat=(document.getElementById('doc-category')&&document.getElementById('doc-category').value)||'Autre';
   [...e.dataTransfer.files].forEach(f=>addDocMain(archive,f,cat));
 }
-function addDocMain(archive,file,category){
+
+async function addDocMain(archive,file,category){
   if(!SINISTRE_DOCS[archive])SINISTRE_DOCS[archive]=[];
   const sz=file.size<1024?file.size+' o':file.size<1048576?Math.round(file.size/1024)+' Ko':(Math.round(file.size/1048576*10)/10)+' Mo';
   const cat=category||'Autre';
-  SINISTRE_DOCS[archive].push({name:file.name,size:sz,category:cat,uploadedBy:currentUser?currentUser.name:'Inconnu',uploadedAt:new Date().toLocaleDateString('fr-FR')});
+  showNotif('⏳ Upload en cours…');
+
+  // 1. Upload vers Supabase Storage
+  const storagePath=`${archive}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+  const{error:upErr}=await _sb.storage.from('documents').upload(storagePath,file,{cacheControl:'3600',upsert:false});
+  if(upErr){showNotif('❌ Erreur upload: '+upErr.message);return;}
+
+  // 2. Sauvegarder métadonnées dans la table documents
+  const{data:docRow,error:dbErr}=await _sb.from('documents').insert({
+    archive,name:file.name,size:sz,category:cat,
+    uploaded_by:currentUser?currentUser.name:'Inconnu',
+    uploaded_at:new Date().toLocaleDateString('fr-FR'),
+    storage_path:storagePath,
+  }).select().single();
+  if(dbErr){showNotif('❌ Erreur base de données: '+dbErr.message);return;}
+
+  // 3. Mettre à jour la mémoire locale
+  SINISTRE_DOCS[archive].unshift({
+    id:docRow.id,name:file.name,size:sz,category:cat,
+    uploadedBy:currentUser?currentUser.name:'Inconnu',
+    uploadedAt:new Date().toLocaleDateString('fr-FR'),
+    storagePath,
+  });
+
+  // 4. Activité
+  const entry={user:currentUser.name,av:currentUser.av,bg:currentUser.bg,color:currentUser.color,
+    action:`Document ajouté — ${CAT_ICONS[cat]||'📎'} ${cat}`,ts:tsNow(),comment:file.name+' ('+sz+')'};
+  if(!SINISTRE_ACTIVITY[archive])SINISTRE_ACTIVITY[archive]=[];
+  SINISTRE_ACTIVITY[archive].unshift(entry);
+  sbSaveActivite(archive,entry);
+  renderActivityFeed(archive);
   renderDocsListMain(archive);
-  if(currentUser){if(!SINISTRE_ACTIVITY[archive])SINISTRE_ACTIVITY[archive]=[];
-    SINISTRE_ACTIVITY[archive].push({user:currentUser.name,av:currentUser.av,bg:currentUser.bg,color:currentUser.color,
-      action:`Document ajouté — ${CAT_ICONS[cat]||'📎'} ${cat}`,ts:tsNow(),comment:file.name+' ('+sz+')'});
-  sbSaveActivite(archive, SINISTRE_ACTIVITY[archive][0]);
-    renderActivityFeed(archive);}
-  showNotif(`✓ "${file.name}" ajouté dans "${cat}".`);
+  showNotif(`✓ "${file.name}" uploadé.`);
 }
 /* ===== REMBOURSEMENT & REVENTE MULTI-LIGNES ===== */
 const RBT_TYPES=['Rbt assurance','Revente marchandise','Avoir assurance','Autre'];
