@@ -2653,11 +2653,7 @@ function docIconLbl(cls){return{pdf:'PDF',img:'IMG',xls:'XLS',doc:'DOC',oth:'…
 async function loadDocsFromSupabase(archive){
   const{data,error}=await _sb.from('documents')
     .select('*').eq('archive',archive).order('created_at',{ascending:false});
-  if(error){
-    console.error('Load docs error détaillé:',JSON.stringify(error));
-    console.error('Code:',error.code,'Message:',error.message,'Details:',error.details);
-    return[];
-  }
+  if(error){console.error('Load docs error:',error);return[];}
   SINISTRE_DOCS[archive]=(data||[]).map(r=>({
     id:r.id,name:r.name,size:r.size,category:r.category,
     uploadedBy:r.uploaded_by,uploadedAt:r.uploaded_at,
