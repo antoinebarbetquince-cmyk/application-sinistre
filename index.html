@@ -2263,6 +2263,103 @@ tr:hover td{background:#FAFAF9;}
 <!-- Input file statique — hors du DOM dynamique pour éviter les problèmes de sécurité navigateur -->
 <input type="file" id="file-input-static" style="display:none;position:fixed;top:-9999px" multiple onchange="handleFileInputMain(this)"/>
 <script>
+/* Supabase minimal client inline — pas de CDN externe */
+(function(){
+  var _url="https://omhromorqpijinwmschk.supabase.co",_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9taHJvbW9ycXBpamlud21zY2hrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzE3NDMsImV4cCI6MjA4OTk0Nzc0M30.M_r9p1Z69_xNj_HGihGV5kwf1NwOGrZL6-19M0OvNno",_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9taHJvbW9ycXBpamlud21zY2hrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzE3NDMsImV4cCI6MjA4OTk0Nzc0M30.M_r9p1Z69_xNj_HGihGV5kwf1NwOGrZL6-19M0OvNno",_sess=null;
+  try{var s=localStorage.getItem('qs_sb_session');if(s){_sess=JSON.parse(s);_token=_sess.access_token||_key;}}catch(e){}
+  function _hdrs(extra){
+    var h={'apikey':_key,'Content-Type':'application/json','Authorization':'Bearer '+(_sess&&_sess.access_token?_sess.access_token:_key)};
+    if(extra)Object.assign(h,extra);return h;
+  }
+  function _fetch(method,path,body,params){
+    var u=_url+path;
+    if(params){var qs=Object.keys(params).map(function(k){return k+'='+encodeURIComponent(params[k]);}).join('&');u+='?'+qs;}
+    return fetch(u,{method:method,headers:_hdrs(),body:body?JSON.stringify(body):undefined})
+      .then(function(r){if(r.status===204)return{data:null,error:null};return r.json().then(function(d){return r.ok?{data:d,error:null}:{data:null,error:d};})})
+      .catch(function(e){return{data:null,error:{message:e.message}}});
+  }
+  var auth={
+    signInWithPassword:function(o){
+      return fetch(_url+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'apikey':_key,'Content-Type':'application/json'},body:JSON.stringify({email:o.email,password:o.password})})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(d.error_description||d.msg||d.error&&typeof d.error==='string')return{data:{user:null,session:null},error:{message:d.error_description||d.msg||d.error}};
+          _sess=d;_token=d.access_token;
+          try{localStorage.setItem('qs_sb_session',JSON.stringify(d));}catch(e){}
+          return{data:{user:d.user,session:d},error:null};
+        }).catch(function(e){return{data:{user:null,session:null},error:{message:e.message}}});
+    },
+    signOut:function(){_sess=null;_token=_key;try{localStorage.removeItem('qs_sb_session');}catch(e){}return Promise.resolve({error:null});},
+    getSession:function(){return Promise.resolve(_sess&&_sess.access_token?{data:{session:_sess},error:null}:{data:{session:null},error:null});}
+  };
+  function TableRef(t){this._t=t;this._f=[];this._o=null;this._sel='*';this._single=false;}
+  TableRef.prototype.select=function(c){this._sel=c||'*';return this;};
+  TableRef.prototype.eq=function(c,v){this._f.push(c+'=eq.'+v);return this;};
+  TableRef.prototype.order=function(c,o){this._o=c+'.'+(o&&o.ascending===false?'desc':'asc');return this;};
+  TableRef.prototype.single=function(){this._single=true;return this;};
+  TableRef.prototype.then=function(res,rej){
+    var self=this,p={'select':self._sel};
+    self._f.forEach(function(f){var i=f.indexOf('=');p[f.slice(0,i)]=f.slice(i+1);});
+    if(self._o)p['order']=self._o;
+    var qs=Object.keys(p).map(function(k){return k+'='+encodeURIComponent(p[k]);}).join('&');
+    return fetch(_url+'/rest/v1/'+self._t+'?'+qs,{method:'GET',headers:_hdrs()})
+      .then(function(r){return r.json().then(function(d){if(!r.ok)return{data:null,error:d};return{data:self._single&&Array.isArray(d)?d[0]:d,error:null};})})
+      .catch(function(e){return{data:null,error:{message:e.message}}})
+      .then(res,rej);
+  };
+  function ins_upd(t,data,method,extra_headers,params){
+    var qs=params?('?'+Object.keys(params).map(function(k){return k+'='+encodeURIComponent(params[k]);}).join('&')):'';
+    return{then:function(res,rej){
+      return fetch(_url+'/rest/v1/'+t+qs,{method:method,headers:_hdrs(Object.assign({'Prefer':'return=representation'},extra_headers)),body:JSON.stringify(data)})
+        .then(function(r){if(r.status===204)return{data:null,error:null};return r.json().then(function(d){return r.ok?{data:Array.isArray(d)?d[0]:d,error:null}:{data:null,error:d};})})
+        .catch(function(e){return{data:null,error:{message:e.message}}})
+        .then(res,rej);
+    },select:function(){return this;},single:function(){return this;}};
+  }
+  function del_builder(t){
+    var filters=[],obj={
+      eq:function(c,v){filters.push(c+'=eq.'+encodeURIComponent(v));return obj;},
+      then:function(res,rej){
+        return fetch(_url+'/rest/v1/'+t+'?'+filters.join('&'),{method:'DELETE',headers:_hdrs({'Prefer':'return=minimal'})})
+          .then(function(r){return r.status===204?{data:null,error:null}:r.json().then(function(d){return{data:null,error:r.ok?null:d};})})
+          .catch(function(e){return{data:null,error:{message:e.message}}})
+          .then(res,rej);
+      }
+    };return obj;
+  }
+  function TableAPI(t){this._t=t;}
+  TableAPI.prototype.select=function(c){var q=new TableRef(this._t);q._sel=c||'*';return q;};
+  TableAPI.prototype.insert=function(d){return ins_upd(this._t,d,'POST',{});};
+  TableAPI.prototype.upsert=function(d,o){
+    var conflict=o&&o.onConflict?'?on_conflict='+o.onConflict:'';
+    var t=this._t;
+    return{then:function(res,rej){
+      return fetch(_url+'/rest/v1/'+t+conflict,{method:'POST',headers:_hdrs({'Prefer':'return=representation,resolution=merge-duplicates'}),body:JSON.stringify(d)})
+        .then(function(r){if(r.status===204)return{data:null,error:null};return r.json().then(function(d2){return r.ok?{data:d2,error:null}:{data:null,error:d2};})})
+        .catch(function(e){return{data:null,error:{message:e.message}}})
+        .then(res,rej);
+    }};
+  };
+  TableAPI.prototype.delete=function(){return del_builder(this._t);};
+  var storage={from:function(bucket){return{
+    upload:function(path,file){
+      var fd=new FormData();fd.append('',file);
+      return fetch(_url+'/storage/v1/object/'+bucket+'/'+path,{method:'POST',headers:{'apikey':_key,'Authorization':'Bearer '+(_sess&&_sess.access_token?_sess.access_token:_key),'x-upsert':'false'},body:fd})
+        .then(function(r){return r.json().then(function(d){return r.ok?{error:null}:{error:d};})}).catch(function(e){return{error:{message:e.message}}});
+    },
+    createSignedUrl:function(path,exp){
+      return fetch(_url+'/storage/v1/object/sign/'+bucket+'/'+path,{method:'POST',headers:_hdrs(),body:JSON.stringify({expiresIn:exp})})
+        .then(function(r){return r.json().then(function(d){return r.ok?{data:{signedUrl:_url+'/storage/v1'+d.signedURL},error:null}:{data:null,error:d};})}).catch(function(e){return{data:null,error:{message:e.message}}});
+    },
+    remove:function(paths){
+      return fetch(_url+'/storage/v1/object/'+bucket,{method:'DELETE',headers:_hdrs(),body:JSON.stringify({prefixes:paths})})
+        .then(function(r){return r.ok?{error:null}:r.json().then(function(d){return{error:d};})}).catch(function(e){return{error:{message:e.message}}});
+    }
+  }}};
+  window.supabase={createClient:function(u,k){return{auth:auth,from:function(t){return new TableAPI(t);},storage:storage};}};
+})();
+</script>
+<script>
 /* ============================================================
    AUTH — Système d'identification
    ============================================================ */
@@ -5102,44 +5199,15 @@ init();
 
 
 
-  // Charger Supabase — d'abord local, puis CDN
-  var SOURCES = [
-    'supabase.min.js',
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.2/dist/umd/supabase.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.49.2/umd/supabase.min.js'
-  ];
 
-  function initSbClient() {
-    window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Initialiser Supabase (lib inline ci-dessus)
+  if (window.supabase && window.supabase.createClient) {
+    window._sb = window.supabase.createClient("https://omhromorqpijinwmschk.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9taHJvbW9ycXBpamlud21zY2hrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzE3NDMsImV4cCI6MjA4OTk0Nzc0M30.M_r9p1Z69_xNj_HGihGV5kwf1NwOGrZL6-19M0OvNno");
     if (window.currentUser && typeof loadAllFromSupabase === 'function') {
       loadAllFromSupabase();
     }
   }
-
-  function tryScript(idx) {
-    if (idx >= SOURCES.length) {
-      console.warn('Supabase non disponible — mode hors ligne.');
-      return;
-    }
-    var s = document.createElement('script');
-    s.src = SOURCES[idx];
-    var t = setTimeout(function() {
-      s.onload = s.onerror = null;
-      tryScript(idx + 1);
-    }, idx === 0 ? 2000 : 10000);
-    s.onload = function() {
-      clearTimeout(t);
-      if (window.supabase && window.supabase.createClient) initSbClient();
-      else tryScript(idx + 1);
-    };
-    s.onerror = function() {
-      clearTimeout(t);
-      tryScript(idx + 1);
-    };
-    document.head.appendChild(s);
-  }
-
-  tryScript(0);
 })();
 </script>
 </body>
