@@ -5100,49 +5100,49 @@ init();
     } catch(e) {}
   })();
 
-
-  // Charger Supabase via script tag uniquement (pas fetch — CORS)
-  // URLs avec version fixe pour éviter les redirections
+  // Charger Supabase en arrière-plan pour les données (CRUD)
   var CDNS = [
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.2/dist/umd/supabase.min.js',
+    'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.49.2/umd/supabase.min.js'
   ];
 
   function initSbClient() {
     window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Si un utilisateur est déjà connecté localement, charger les données
     if (window.currentUser && typeof loadAllFromSupabase === 'function') {
       loadAllFromSupabase();
     }
   }
 
   function tryScript(idx) {
-    if (idx >= CDNS.length) {
-      console.warn('Supabase non disponible — données non synchronisées.');
-      return;
-    }
+    if (idx >= CDNS.length) return; // Pas grave, auth locale fonctionne sans
     var s = document.createElement('script');
     s.src = CDNS[idx];
-    var t = setTimeout(function() {
-      s.onload = s.onerror = null;
-      console.warn('CDN timeout:', CDNS[idx]);
-      tryScript(idx + 1);
-    }, 10000);
+    s.crossOrigin = 'anonymous';
+    var t = setTimeout(function() { s.onload = s.onerror = null; tryScript(idx+1); }, 8000);
     s.onload = function() {
       clearTimeout(t);
-      if (window.supabase && window.supabase.createClient) {
-        initSbClient();
-      } else {
-        tryScript(idx + 1);
-      }
+      if (window.supabase && window.supabase.createClient) initSbClient();
+      else tryScript(idx+1);
     };
-    s.onerror = function() {
-      clearTimeout(t);
-      tryScript(idx + 1);
-    };
+    s.onerror = function() { clearTimeout(t); tryScript(idx+1); };
     document.head.appendChild(s);
   }
 
-  tryScript(0);
+  function tryFetch(idx) {
+    if (idx >= CDNS.length) { tryScript(0); return; }
+    fetch(CDNS[idx])
+      .then(function(r) { return r.text(); })
+      .then(function(code) {
+        (new Function(code))();
+        if (window.supabase && window.supabase.createClient) initSbClient();
+        else tryFetch(idx+1);
+      })
+      .catch(function() { tryFetch(idx+1); });
+  }
+
+  tryFetch(0);
 })();
 </script>
 </body>
