@@ -5101,10 +5101,9 @@ init();
   })();
 
 
-
-  // Charger Supabase — d'abord local, puis CDN
-  var SOURCES = [
-    'supabase.min.js',
+  // Charger Supabase via script tag uniquement (pas fetch — CORS)
+  // URLs avec version fixe pour éviter les redirections
+  var CDNS = [
     'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.2/dist/umd/supabase.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.49.2/umd/supabase.min.js'
   ];
@@ -5117,20 +5116,24 @@ init();
   }
 
   function tryScript(idx) {
-    if (idx >= SOURCES.length) {
-      console.warn('Supabase non disponible — mode hors ligne.');
+    if (idx >= CDNS.length) {
+      console.warn('Supabase non disponible — données non synchronisées.');
       return;
     }
     var s = document.createElement('script');
-    s.src = SOURCES[idx];
+    s.src = CDNS[idx];
     var t = setTimeout(function() {
       s.onload = s.onerror = null;
+      console.warn('CDN timeout:', CDNS[idx]);
       tryScript(idx + 1);
-    }, idx === 0 ? 2000 : 10000);
+    }, 10000);
     s.onload = function() {
       clearTimeout(t);
-      if (window.supabase && window.supabase.createClient) initSbClient();
-      else tryScript(idx + 1);
+      if (window.supabase && window.supabase.createClient) {
+        initSbClient();
+      } else {
+        tryScript(idx + 1);
+      }
     };
     s.onerror = function() {
       clearTimeout(t);
