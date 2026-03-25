@@ -3417,7 +3417,7 @@ function sbPushActivity(archive, entry){
   sbSaveActivite(archive, entry);
 }
 async function sbSaveActivite(archive, entry){
-  const{error}=await window._sb.from('activite').insert({
+  const{error}=await _sb.from('activite').insert({
     archive,
     user_name: entry.user,
     user_av:   entry.av,
@@ -3429,7 +3429,7 @@ async function sbSaveActivite(archive, entry){
 }
 
 async function loadActiviteFromSupabase(archive){
-  const{data,error}=await window._sb.from('activite')
+  const{data,error}=await _sb.from('activite')
     .select('*')
     .eq('archive',archive)
     .order('created_at',{ascending:false});
@@ -3497,7 +3497,7 @@ function docIconLbl(cls){return{pdf:'PDF',img:'IMG',xls:'XLS',doc:'DOC',oth:'…
 
 // Charger les documents depuis Supabase
 async function loadDocsFromSupabase(archive){
-  const{data,error}=await window._sb.from('documents')
+  const{data,error}=await _sb.from('documents')
     .select('*').eq('archive',archive);
   if(error){
     console.error('Load docs error détaillé:',JSON.stringify(error));
@@ -3575,7 +3575,7 @@ async function previewDoc(archive,idx){
   viewer.style.display='block';
   viewer.scrollIntoView({behavior:'smooth',block:'start'});
   // Obtenir URL signée (valide 1h)
-  const{data,error}=await window._sb.storage.from('documents').createSignedUrl(doc.storagePath,3600);
+  const{data,error}=await _sb.storage.from('documents').createSignedUrl(doc.storagePath,3600);
   if(error||!data){viewerBody.innerHTML='<div style="padding:20px;text-align:center;color:var(--red);">Erreur de chargement</div>';return;}
   const url=data.signedUrl;
   const icn=docIconCls(doc.name);
@@ -3591,7 +3591,7 @@ async function previewDoc(archive,idx){
 async function downloadDoc(archive,idx){
   const doc=SINISTRE_DOCS[archive]&&SINISTRE_DOCS[archive][idx];
   if(!doc||!doc.storagePath)return;
-  const{data,error}=await window._sb.storage.from('documents').createSignedUrl(doc.storagePath,60);
+  const{data,error}=await _sb.storage.from('documents').createSignedUrl(doc.storagePath,60);
   if(error||!data){showNotif('❌ Erreur téléchargement');return;}
   const a=document.createElement('a');a.href=data.signedUrl;a.download=doc.name;a.click();
 }
@@ -3606,12 +3606,12 @@ async function deleteDocMain(archive,idx){
   if(!confirm('Supprimer "'+doc.name+'" ?'))return;
   // Supprimer du Storage
   if(doc.storagePath){
-    const{error:storErr}=await window._sb.storage.from('documents').remove([doc.storagePath]);
+    const{error:storErr}=await _sb.storage.from('documents').remove([doc.storagePath]);
     if(storErr)console.warn('Storage delete warn:',storErr);
   }
   // Supprimer de la table
   if(doc.id){
-    const{error}=await window._sb.from('documents').delete().eq('id',doc.id);
+    const{error}=await _sb.from('documents').delete().eq('id',doc.id);
     if(error){showNotif('❌ Erreur suppression');return;}
   }
   SINISTRE_DOCS[archive].splice(idx,1);
@@ -3646,11 +3646,11 @@ async function addDocMain(archive,file,category){
 
   // 1. Upload vers Supabase Storage
   const storagePath=`${archive}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
-  const{error:upErr}=await window._sb.storage.from('documents').upload(storagePath,file,{cacheControl:'3600',upsert:false});
+  const{error:upErr}=await _sb.storage.from('documents').upload(storagePath,file,{cacheControl:'3600',upsert:false});
   if(upErr){showNotif('❌ Erreur upload: '+upErr.message);return;}
 
   // 2. Sauvegarder métadonnées dans la table documents
-  const{data:docRow,error:dbErr}=await window._sb.from('documents').insert({
+  const{data:docRow,error:dbErr}=await _sb.from('documents').insert({
     archive,name:file.name,size:sz,category:cat,
     uploaded_by:currentUser?currentUser.name:'Inconnu',
     uploaded_at:new Date().toLocaleDateString('fr-FR'),
@@ -5041,7 +5041,7 @@ init();
    ============================================================ */
 const SUPABASE_URL = "https://omhromorqpijinwmschk.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9taHJvbW9ycXBpamlud21zY2hrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzE3NDMsImV4cCI6MjA4OTk0Nzc0M30.M_r9p1Z69_xNj_HGihGV5kwf1NwOGrZL6-19M0OvNno";
-window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const USER_META = {
   'amelie.nussbaum@transportsquince.fr': {name:'Amélie Nussbaum', role:'Gestionnaire sinistres', av:'AN', bg:'#FEF0E7', color:'#B84A07'},
@@ -5082,7 +5082,7 @@ function appToDB(d){
 
 async function sbSaveSinistre(d){
   const row=appToDB(d);
-  const{error}=await window._sb.from('sinistres').upsert(row,{onConflict:'archive'});
+  const{error}=await _sb.from('sinistres').upsert(row,{onConflict:'archive'});
   if(error){
     console.error('Supabase save error détaillé:',JSON.stringify(error));
     console.error('Row envoyé:',JSON.stringify(row));
@@ -5101,7 +5101,7 @@ async function sbSaveRelance(r){
     echeance:r.echeance,description:r.desc||null,statut:r.statut||'À faire',
     cree_le:r.creeLe||null,cree_par:r.creePar||null,
   };
-  const{data,error}=await window._sb.from('relances').upsert(row).select().single();
+  const{data,error}=await _sb.from('relances').upsert(row).select().single();
   if(error){console.error('Supabase relance error:',error);return null;}
   return data;
 }
@@ -5110,8 +5110,8 @@ async function loadAllFromSupabase(){
   try{
     showNotif('⏳ Chargement…');
     const[{data:sins,error:e1},{data:rels,error:e2}]=await Promise.all([
-      window._sb.from('sinistres').select('*').order('created_at',{ascending:false}),
-      window._sb.from('relances').select('*').order('echeance',{ascending:true}),
+      _sb.from('sinistres').select('*').order('created_at',{ascending:false}),
+      _sb.from('relances').select('*').order('echeance',{ascending:true}),
     ]);
     if(e1)throw e1;
     if(e2)throw e2;
@@ -5164,7 +5164,7 @@ window.doLogin = async function(){
   const pw=document.getElementById('login-pass').value;
   const errEl=document.getElementById('login-err');
   errEl.style.display='none';
-  const{data,error}=await window._sb.auth.signInWithPassword({email,password:pw});
+  const{data,error}=await _sb.auth.signInWithPassword({email,password:pw});
   if(error){errEl.style.display='block';errEl.textContent='Email ou mot de passe incorrect.';return;}
   loginSuccess_sb(email);
   await loadAllFromSupabase();
@@ -5172,7 +5172,7 @@ window.doLogin = async function(){
 
 // ── Override doLogout ────────────────────────────────────────
 window.doLogout = async function(){
-  await window._sb.auth.signOut();
+  await _sb.auth.signOut();
   currentUser=null;DATA=[];filteredData=[];RELANCES=[];
   document.getElementById('login-screen').classList.add('open');
   document.getElementById('login-user').value='';
@@ -5229,14 +5229,14 @@ window.closeRelance=async function(id){
 };
 const _orig_deleteRelance=window.deleteRelance;
 window.deleteRelance=async function(id){
-  const{error}=await window._sb.from('relances').delete().eq('id',id);
+  const{error}=await _sb.from('relances').delete().eq('id',id);
   if(error)console.error('Delete relance error:',error);
   _orig_deleteRelance.call(this,id);
 };
 
 // ── Vérifier session existante ───────────────────────────────
 (async function(){
-  const{data}=await window._sb.auth.getSession();
+  const{data}=await _sb.auth.getSession();
   if(data.session){
     loginSuccess_sb(data.session.user.email);
     await loadAllFromSupabase();
