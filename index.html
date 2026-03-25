@@ -1399,8 +1399,7 @@ tr:hover td{background:#FAFAF9;}
 
 
 </body>
-</html></head>YPE html>
-<html lang="fr">
+</html>
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -2371,8 +2370,8 @@ const USERS = {
 let currentUser = null;
 
 function doLogin(){
-  const id=document.getElementById('login-user').value.trim().toLowerCase();
-  const pw=document.getElementById('login-pass').value;
+  const id=document.getElementById('email').value.trim().toLowerCase();
+  const pw=document.getElementById('password').value;
   const u=USERS[id];
   if(u && pw===u.pass){
     loginSuccess(id, u);
