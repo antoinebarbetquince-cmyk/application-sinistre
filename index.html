@@ -4079,7 +4079,7 @@ function renderHeatmap(){
     matrix[d.conducteur][m].chiffrage+=d.chiffrage||0;
     matrix[d.conducteur][m].dossiers.push(d);
     monthTotals[m]+=(metric==='count'?1:(d.chiffrage||0));
-    condTotals[d.conducteur]=(condTotals[d.conducteur]||0)+(metric==='count'?1:(d.chiffrage||0));
+    condTotals[d.conducteur]=(condTotals[d.conducteur]||0)+(d.chiffrage||0);
   });
 
   const allVals=conds.flatMap(c=>Array(12).fill(0).map((_,m)=>metric==='count'?matrix[c][m].count:matrix[c][m].chiffrage));
@@ -4095,7 +4095,7 @@ function renderHeatmap(){
       let va,vb;
       if(_hmSortCol==='name'){va=a;vb=b;return _hmSortAsc?va.localeCompare(vb,'fr'):vb.localeCompare(va,'fr');}
       if(_hmSortCol==='total'){va=condTotals[a]||0;vb=condTotals[b]||0;}
-      else{const m=parseInt(_hmSortCol);va=metric==='count'?matrix[a][m].count:matrix[a][m].chiffrage;vb=metric==='count'?matrix[b][m].count:matrix[b][m].chiffrage;}
+      else{const m=parseInt(_hmSortCol);va=matrix[a][m].chiffrage;vb=matrix[b][m].chiffrage;}
       return _hmSortAsc?va-vb:vb-va;
     });
   }
