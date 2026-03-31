@@ -4042,18 +4042,6 @@ function exportComptaCSV(){
 const MOIS=MOIS_COURT; // alias pour la heatmap
 function hmClass(v,max){if(!v)return'hm0';const r=v/max;if(r<.15)return'hm1';if(r<.3)return'hm2';if(r<.5)return'hm3';if(r<.7)return'hm4';if(r<.88)return'hm5';return'hm6';}
 
-/* ===== HEATMAP SORT STATE ===== */
-let _hmSortCol='total';
-let _hmSortAsc=false;
-function hmThClick(col){
-  if(_hmSortCol===col)_hmSortAsc=!_hmSortAsc;
-  else{_hmSortCol=col;_hmSortAsc=false;}
-  renderHeatmap();
-}
-function hmSortIcon(col){
-  if(_hmSortCol!==col)return'';
-  return _hmSortAsc?' ▲':' ▼';
-}
 function renderHeatmap(){
   const yearSel=document.getElementById('hm-year');
   const metric=document.getElementById('hm-metric').value;
@@ -4098,7 +4086,32 @@ function renderHeatmap(){
   const maxVal=Math.max(1,...allVals);
 
   // Build table
-  const sortedConds=[...conds].sort((a,b)=>{let va,vb;if(_hmSortCol==='name'){va=a;vb=b;return _hmSortAsc?va.localeCompare(vb,'fr'):vb.localeCompare(va,'fr');}if(_hmSortCol==='total'){va=condTotals[a]||0;vb=condTotals[b]||0;}else{const m=parseInt(_hmSortCol);va=matrix[a][m].chiffrage;vb=matrix[b][m].chiffrage;}return _hmSortAsc?va-vb:vb-va;});
+  // Tri heatmap : par défaut par total desc, cliquable par mois
+  let _hmSortCol='total'; // 'total' ou index mois 0-11
+  let _hmSortAsc=false;
+
+  function getSortedConds(conds){
+    return [...conds].sort((a,b)=>{
+      let va,vb;
+      if(_hmSortCol==='name'){va=a;vb=b;return _hmSortAsc?va.localeCompare(vb,'fr'):vb.localeCompare(va,'fr');}
+      if(_hmSortCol==='total'){va=condTotals[a]||0;vb=condTotals[b]||0;}
+      else{const m=parseInt(_hmSortCol);va=matrix[a][m].chiffrage;vb=matrix[b][m].chiffrage;}
+      return _hmSortAsc?va-vb:vb-va;
+    });
+  }
+
+  function hmThClick(col){
+    if(_hmSortCol===col)_hmSortAsc=!_hmSortAsc;
+    else{_hmSortCol=col;_hmSortAsc=false;}
+    renderHeatmap();
+  }
+
+  function hmSortIcon(col){
+    if(_hmSortCol!==col)return'';
+    return _hmSortAsc?' ▲':' ▼';
+  }
+
+  const sortedConds=getSortedConds(conds);
 
   let html=`<table class="heatmap-tbl">
   <thead><tr>

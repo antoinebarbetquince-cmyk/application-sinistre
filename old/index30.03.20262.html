@@ -1886,10 +1886,11 @@ function badgeEntite(e){
   return'<span style="color:var(--text3);font-size:11px">—</span>';
 }
 function facturesSummary(d){
-  // Filtrer les lignes vides (montant=0 ET numéro vide)
-  const facts=(d.factures||[]).filter(f=>f.montant>0||f.numero);
+  const facts=d.factures||[];
   if(!facts.length){
+    // Fallback to old single-facture field
     if(d.nfact)return`<span class="mono" style="font-size:10px">${d.nfact}</span>`;
+    // Si chiffrage saisi sans facture → afficher en italique
     if(d.chiffrage>0)return`<span style="font-size:10px;color:var(--text3);font-style:italic;">Devis: ${fmtEur(d.chiffrage)}</span>`;
     return'—';
   }
@@ -4042,18 +4043,6 @@ function exportComptaCSV(){
 const MOIS=MOIS_COURT; // alias pour la heatmap
 function hmClass(v,max){if(!v)return'hm0';const r=v/max;if(r<.15)return'hm1';if(r<.3)return'hm2';if(r<.5)return'hm3';if(r<.7)return'hm4';if(r<.88)return'hm5';return'hm6';}
 
-/* ===== HEATMAP SORT STATE ===== */
-let _hmSortCol='total';
-let _hmSortAsc=false;
-function hmThClick(col){
-  if(_hmSortCol===col)_hmSortAsc=!_hmSortAsc;
-  else{_hmSortCol=col;_hmSortAsc=false;}
-  renderHeatmap();
-}
-function hmSortIcon(col){
-  if(_hmSortCol!==col)return'';
-  return _hmSortAsc?' ▲':' ▼';
-}
 function renderHeatmap(){
   const yearSel=document.getElementById('hm-year');
   const metric=document.getElementById('hm-metric').value;
@@ -4091,24 +4080,22 @@ function renderHeatmap(){
     matrix[d.conducteur][m].chiffrage+=d.chiffrage||0;
     matrix[d.conducteur][m].dossiers.push(d);
     monthTotals[m]+=(metric==='count'?1:(d.chiffrage||0));
-    condTotals[d.conducteur]=(condTotals[d.conducteur]||0)+(d.chiffrage||0);
+    condTotals[d.conducteur]=(condTotals[d.conducteur]||0)+(metric==='count'?1:(d.chiffrage||0));
   });
 
   const allVals=conds.flatMap(c=>Array(12).fill(0).map((_,m)=>metric==='count'?matrix[c][m].count:matrix[c][m].chiffrage));
   const maxVal=Math.max(1,...allVals);
 
   // Build table
-  const sortedConds=[...conds].sort((a,b)=>{let va,vb;if(_hmSortCol==='name'){va=a;vb=b;return _hmSortAsc?va.localeCompare(vb,'fr'):vb.localeCompare(va,'fr');}if(_hmSortCol==='total'){va=condTotals[a]||0;vb=condTotals[b]||0;}else{const m=parseInt(_hmSortCol);va=matrix[a][m].chiffrage;vb=matrix[b][m].chiffrage;}return _hmSortAsc?va-vb:vb-va;});
-
   let html=`<table class="heatmap-tbl">
   <thead><tr>
-    <th class="cond-col" style="cursor:pointer" onclick="hmThClick('name')">Conducteur${hmSortIcon('name')}</th>
-    ${MOIS.map((m,i)=>`<th style="cursor:pointer" onclick="hmThClick('${i}')">${m}${hmSortIcon(String(i))}</th>`).join('')}
-    <th style="cursor:pointer" onclick="hmThClick('total')">Total${hmSortIcon('total')}</th>
+    <th class="cond-col">Conducteur</th>
+    ${MOIS.map(m=>`<th>${m}</th>`).join('')}
+    <th>Total</th>
   </tr></thead>
   <tbody>`;
 
-  sortedConds.forEach(c=>{
+  conds.forEach(c=>{
     const total=condTotals[c]||0;
     html+=`<tr><td class="cond-cell">${c}</td>`;
     for(let m=0;m<12;m++){
