@@ -4081,8 +4081,7 @@ function renderHeatmap(){
   const matrix={};
   const monthTotals=Array(12).fill(0);
   const condTotals={};
-  const condCounts={};
-  conds.forEach(c=>{matrix[c]=Array(12).fill(null).map(()=>({count:0,chiffrage:0,dossiers:[]}));condTotals[c]=0;condCounts[c]=0;});
+  conds.forEach(c=>{matrix[c]=Array(12).fill(null).map(()=>({count:0,chiffrage:0,dossiers:[]}));condTotals[c]=0;});
 
   yearData.forEach(d=>{
     const p=parseDate(d.date);if(!p)return;
@@ -4093,7 +4092,6 @@ function renderHeatmap(){
     matrix[d.conducteur][m].dossiers.push(d);
     monthTotals[m]+=(metric==='count'?1:(d.chiffrage||0));
     condTotals[d.conducteur]=(condTotals[d.conducteur]||0)+(d.chiffrage||0);
-    condCounts[d.conducteur]=(condCounts[d.conducteur]||0)+1;
   });
 
   const allVals=conds.flatMap(c=>Array(12).fill(0).map((_,m)=>metric==='count'?matrix[c][m].count:matrix[c][m].chiffrage));
@@ -4123,7 +4121,7 @@ function renderHeatmap(){
       if(val>0)html+=`<span class="dot-badge">${display}</span>`;
       html+=`</td>`;
     }
-    const totalDisplay=metric==='count'?(condCounts[c]||0):Math.round(total/1000)+'k';
+    const totalDisplay=metric==='count'?total:Math.round(total/1000)+'k';
     html+=`<td class="total-cell">${totalDisplay}</td></tr>`;
   });
 
