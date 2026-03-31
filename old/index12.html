@@ -1904,13 +1904,6 @@ function facturesSummary(d){
 }
 
 function renderList(){
-  // Appliquer le tri courant
-  filteredData.sort((a,b)=>{
-    let va=a[currentSortField],vb=b[currentSortField];
-    if(currentSortField==='date'){const da=parseDate(va),db=parseDate(vb);if(!da&&!db)return 0;if(!da)return 1;if(!db)return-1;return sortAsc?da-db:db-da;}
-    if(typeof va==='number'||currentSortField==='chiffrage'||currentSortField==='rbt'){va=parseFloat(va)||0;vb=parseFloat(vb)||0;return sortAsc?va-vb:vb-va;}
-    va=String(va||'').toLowerCase();vb=String(vb||'').toLowerCase();return sortAsc?va.localeCompare(vb,'fr'):vb.localeCompare(va,'fr');
-  });
   document.getElementById('list-count').textContent=filteredData.length+' sinistre'+(filteredData.length>1?'s':'');
   document.getElementById('list-tbody').innerHTML=filteredData.map((d,i)=>`<tr>
     <td>${d.date}</td>
@@ -4107,7 +4100,7 @@ function renderHeatmap(){
   const maxVal=Math.max(1,...allVals);
 
   // Build table
-  const sortedConds=[...conds].sort((a,b)=>{let va,vb;if(_hmSortCol==='name'){va=a;vb=b;return _hmSortAsc?va.localeCompare(vb,'fr'):vb.localeCompare(va,'fr');}if(_hmSortCol==='total'){va=metric==='count'?(condCounts[a]||0):(condTotals[a]||0);vb=metric==='count'?(condCounts[b]||0):(condTotals[b]||0);}else{const m=parseInt(_hmSortCol);va=metric==='count'?matrix[a][m].count:matrix[a][m].chiffrage;vb=metric==='count'?matrix[b][m].count:matrix[b][m].chiffrage;}return _hmSortAsc?va-vb:vb-va;});
+  const sortedConds=[...conds].sort((a,b)=>{let va,vb;if(_hmSortCol==='name'){va=a;vb=b;return _hmSortAsc?va.localeCompare(vb,'fr'):vb.localeCompare(va,'fr');}if(_hmSortCol==='total'){va=condTotals[a]||0;vb=condTotals[b]||0;}else{const m=parseInt(_hmSortCol);va=matrix[a][m].chiffrage;vb=matrix[b][m].chiffrage;}return _hmSortAsc?va-vb:vb-va;});
 
   let html=`<table class="heatmap-tbl">
   <thead><tr>
