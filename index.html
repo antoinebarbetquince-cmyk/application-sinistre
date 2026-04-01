@@ -147,6 +147,7 @@ tr:hover td{background:var(--surface2);}
 .b-quince{background:#FEF0E7;color:#B84A07;border:1px solid #F4C090;}
 .b-damois{background:#E6F4EC;color:#145C32;border:1px solid #A0D8B4;}
 .b-quesnel{background:#EEF2FF;color:#1B4FD8;border:1px solid #A5B4FC;}
+.b-litige{background:#F5F0FF;color:#5B21B6;border:1px solid #C4B5FD;}
 .compta-link{cursor:pointer;color:var(--accent);text-decoration:underline;font-size:11px;}
 /* ===== RELANCES CSS ===== */
 .kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start;}
@@ -782,6 +783,7 @@ tr:hover td{background:var(--surface2);}
           <option value="">Tous états</option>
           <option value="en-cours">En cours</option>
           <option value="Terminé">Terminé</option>
+        <option value="Litige">⚖ Litige</option>
         </select>
         <select onchange="applyFilters()" id="f-affreteur">
           <option value="">Tous affréteurs</option>
@@ -857,6 +859,7 @@ tr:hover td{background:var(--surface2);}
             <select id="nf-etat">
               <option value="en-cours">En cours</option>
               <option value="Terminé">Terminé</option>
+              <option value="Litige">⚖ Litige</option>
             </select>
           </div>
           <div class="fgrp" style="min-width:140px;">
@@ -1342,6 +1345,7 @@ tr:hover td{background:var(--surface2);}
           <option value="À faire">À faire</option>
           <option value="En cours">En cours</option>
           <option value="Terminé">Terminé</option>
+        <option value="Litige">⚖ Litige</option>
         </select>
       </div>
     </div>
@@ -1380,6 +1384,7 @@ tr:hover td{background:var(--surface2);}
       <div style="width:1px;height:20px;background:var(--border);margin:0 2px;"></div>
       <button class="btn" onclick="exportSingleCSV()">↓ Exporter</button>
       <button class="btn" onclick="addRelanceFromSinistre(DATA[currentDetailIdx]&&DATA[currentDetailIdx].archive)">+ Relance</button>
+      <button class="btn btn-danger" onclick="deleteSinistre()">🗑 Supprimer</button>
       <button class="btn" id="btn-edit-toggle" onclick="toggleEditMode()">✏ Modifier</button>
       <button class="btn btn-primary" onclick="closeDetail()">Fermer</button>
     </div>
@@ -1483,7 +1488,7 @@ const SINISTRE_DOCS = {}
 function parseDate(s){if(!s)return null;const p=s.split('/');if(p.length===3)return new Date(p[2],p[1]-1,p[0]);return null;}
 function fmtEur(n){if(!n||n===0)return'—';return Number(n).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function fmtDate(s){if(!s)return'—';return s;}
-function badgeEtat(e){return e==='Terminé'?'<span class="badge b-done">Terminé</span>':'<span class="badge b-open">En cours</span>';}
+function badgeEtat(e){if(e==='Terminé')return'<span class="badge b-done">Terminé</span>';if(e==='Litige')return'<span class="badge b-litige">⚖ Litige</span>';return'<span class="badge b-open">En cours</span>';}
 function badgeContest(c){return c?'<span class="badge b-contest">Contestation</span>':'';}
 function prescDays(dateStr){
   const d=parseDate(dateStr);if(!d)return null;
@@ -2064,6 +2069,7 @@ function openModal(idx){
               <select class="ie-field" id="ie-etat">
                 <option value="en-cours" ${d.etat==='en-cours'?'selected':''}>En cours</option>
                 <option value="Terminé" ${d.etat==='Terminé'?'selected':''}>Terminé</option>
+                <option value="Litige" ${d.etat==='Litige'?'selected':''}>⚖ Litige</option>
               </select>
             </div>
             <div class="detail-item"><label>Type sinistre</label>
@@ -2305,6 +2311,24 @@ function openModal(idx){
   // Nav prev/next
   updateNavButtons();
 }
+
+async function deleteSinistre(){
+  if(currentDetailIdx<0)return;
+  const d=DATA[currentDetailIdx];
+  if(!confirm('Supprimer définitivement le sinistre '+d.archive+' — '+d.conducteur+' ?\nCette action est irréversible.'))return;
+  // Supprimer dans Supabase
+  if(window._sb){
+    const{error}=await window._sb.from('sinistres').delete().eq('archive',d.archive);
+    if(error){showNotif('❌ Erreur suppression : '+error.message);return;}
+  }
+  // Supprimer localement
+  DATA.splice(currentDetailIdx,1);
+  filteredData=filteredData.filter(x=>x.archive!==d.archive);
+  closeDetail();
+  renderList();
+  if(typeof renderDash==='function')renderDash();
+  showNotif('✓ Sinistre '+d.archive+' supprimé.');
+}
 function closeDetail(){
   document.getElementById('detail-page').classList.remove('open');
 }
@@ -2358,6 +2382,7 @@ function renderEditForm(d){
             <select id="ef-etat">
               <option value="en-cours" ${d.etat==='en-cours'?'selected':''}>En cours</option>
               <option value="Terminé" ${d.etat==='Terminé'?'selected':''}>Terminé</option>
+              <option value="Litige" ${d.etat==='Litige'?'selected':''}>⚖ Litige</option>
             </select>
           </div>
           <div class="ef-group"><label>NREF Assurance</label><input type="text" id="ef-nref" value="${d.nref||''}"/></div>
