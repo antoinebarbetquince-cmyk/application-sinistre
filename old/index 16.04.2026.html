@@ -803,7 +803,6 @@ tr:hover td{background:var(--surface2);}
             <datalist id="conducteurs-list"></datalist>
           </div>
           <div class="fgrp"><label>Immatriculation</label><input type="text" id="nf-immat" placeholder="AB-123-CD"/></div>
-          <div class="fgrp"><label>Remorque</label><input type="text" id="nf-remorque" placeholder="Plaque remorque"/></div>
           <div class="fgrp"><label>N° de châssis (VIN)</label><input type="text" id="nf-chassis" placeholder="17 caractères"/></div>
           <div class="fgrp"><label>Affréteur</label>
             <select id="nf-affreteur">
@@ -2032,7 +2031,6 @@ function openModal(idx){
           <div class="detail-grid">
             <div class="detail-item" style="grid-column:span 2"><label>Conducteur</label><span class="big">${d.conducteur}</span></div>
             <div class="detail-item"><label>Immatriculation</label><span class="val-mono" style="font-size:13px;font-weight:700">${d.immat||'—'}</span></div>
-            <div class="detail-item"><label>Remorque</label><span class="val-mono">${d.remorque||'—'}</span></div>
             <div class="detail-item"><label>Affréteur</label><span>${d.affreteur||'—'}</span></div>
             <div class="detail-item"><label>N° Lettre MEC</label><span class="val-mono">${d.ldv||'—'}</span></div>
             <div class="detail-item" style="grid-column:span 6"><label>N° Châssis</label><span class="val-mono">${d.chassis||'—'}</span></div>
@@ -2042,7 +2040,6 @@ function openModal(idx){
           <div class="detail-grid-4">
             <div class="detail-item"><label>Conducteur</label><input class="ie-field" id="ie-conducteur" type="text" list="conducteurs-list" value="${d.conducteur||''}"/></div>
             <div class="detail-item"><label>Immatriculation</label><input class="ie-field" id="ie-immat" type="text" value="${d.immat||''}"/></div>
-            <div class="detail-item"><label>Remorque</label><input class="ie-field" id="ie-remorque" type="text" value="${d.remorque||''}" placeholder="Plaque remorque"/></div>
             <div class="detail-item"><label>Affréteur</label>
               <select class="ie-field" id="ie-affreteur">
                 <option value="" ${!d.affreteur?'selected':''}>— Aucun —</option>
@@ -2336,10 +2333,7 @@ function renderEditForm(d){
             <input type="number" id="ef-franchise" step="0.01" value="${d.franchise||''}" style="font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid var(--border2);border-radius:5px;padding:5px 8px;width:100%;"/>
           </div>
           <label class="ef-check" style="margin-bottom:4px;"><input type="checkbox" id="ef-contest" ${d.contest?'checked':''}/> Contestation</label>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-            <label class="ef-check"><input type="checkbox" id="ef-expertise" ${d.expertise?'checked':''}/> Expertise</label>
-            <input type="date" id="ef-expertise-date" value="${d.expertise_date||''}" style="font-family:'DM Sans',sans-serif;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:4px 7px;color:var(--text);background:var(--surface);outline:none;" title="Date d'expertise"/>
-          </div>
+          <label class="ef-check" style="margin-bottom:4px;"><input type="checkbox" id="ef-expertise" ${d.expertise?'checked':''}/> Expertise</label>
         </div>
       </div>
     </div>
@@ -2356,7 +2350,6 @@ function renderEditForm(d){
             <datalist id="ef-conducteurs-list">${CONDUCTEURS.map(c=>`<option value="${c}">`).join('')}</datalist>
           </div>
           <div class="ef-group"><label>Immatriculation</label><input type="text" id="ef-immat" value="${d.immat||''}"/></div>
-          <div class="ef-group"><label>Remorque</label><input type="text" id="ef-remorque" value="${d.remorque||''}" placeholder="Plaque remorque"/></div>
           <div class="ef-group"><label>Affréteur</label>
             <select id="ef-affreteur">
               <option value="" ${!d.affreteur?'selected':''}>— Aucun —</option>
@@ -2466,10 +2459,8 @@ function saveEdit(){
     factures: getFacturesFromList('ef-factures-list'),
     contest:  gsv('ef-contest','checked')?'OUI':'',
     expertise:gsv('ef-expertise','checked')?'OUI':'',
-    expertise_date:gsv('ef-expertise-date')||'',
     conducteur:gsv('ef-conducteur'),
     immat:    gsv('ef-immat').trim(),
-    remorque: gsv('ef-remorque')||'',
     affreteur:gsv('ef-affreteur'),
     ldv:      gsv('ef-ldv').trim(),
     chassis:  gsv('ef-chassis').trim(),
@@ -3113,7 +3104,6 @@ function saveNew(){
     franchise:parseFloat(document.getElementById('nf-franchise')&&document.getElementById('nf-franchise').value)||0,
     conducteur:cond,
     immat:document.getElementById('nf-immat').value,
-    remorque:document.getElementById('nf-remorque').value,
     affreteur:document.getElementById('nf-affreteur').value,
     ldv:document.getElementById('nf-ldv').value,
     chassis:document.getElementById('nf-chassis').value,
@@ -3354,7 +3344,7 @@ function saveRelance(){
     creeLe:existing?existing.creeLe:new Date().toLocaleDateString('fr-FR'),
     creePar:existing?existing.creePar:currentUser?.name||'—',
   };
-  if(rlEditId){const i=RELANCES.findIndex(x=>x.id===rlEditId);if(i>=0)RELANCES[i]=r;if(window._sb)sbSaveRelance(r);}
+  if(rlEditId){const i=RELANCES.findIndex(x=>x.id===rlEditId);if(i>=0)RELANCES[i]=r;}
   else{
     RELANCES.unshift(r);
     if(r.archive&&SINISTRE_ACTIVITY){
@@ -3390,7 +3380,6 @@ function editRelance(id){
 function closeRelance(id){
   const r=RELANCES.find(x=>x.id===id);if(!r)return;
   r.statut='Terminé';
-  if(window._sb)sbSaveRelance(r);
   if(r.archive&&SINISTRE_ACTIVITY){
     if(!SINISTRE_ACTIVITY[r.archive])SINISTRE_ACTIVITY[r.archive]=[];
     const u=currentUser||{name:'Système',av:'SY',bg:'#1E1C1A',color:'#E8A870'};
@@ -3416,11 +3405,9 @@ function addRelanceFromSinistre(archive){
 
 /* ===== NAVIGATION PREV / NEXT ===== */
 function navSinistre(dir){
-  const posInFiltered=filteredData.indexOf(DATA[currentDetailIdx]);
-  const newPosInFiltered=posInFiltered+dir;
-  if(newPosInFiltered<0||newPosInFiltered>=filteredData.length)return;
-  const globalIdx=DATA.indexOf(filteredData[newPosInFiltered]);
-  if(globalIdx<0)return;
+  const newIdx=currentDetailIdx+dir;
+  if(newIdx<0||newIdx>=filteredData.length)return;
+  const globalIdx=DATA.indexOf(filteredData[newIdx]);
   openModal(globalIdx);
 }
 
@@ -3509,7 +3496,6 @@ function ieSave(sec){
   } else if(sec==='veh'){
     d.conducteur=gf('ie-conducteur')||d.conducteur;
     d.immat=gf('ie-immat');
-    d.remorque=gf('ie-remorque');
     d.affreteur=gf('ie-affreteur');
     d.ldv=gf('ie-ldv');
     d.chassis=gf('ie-chassis');
