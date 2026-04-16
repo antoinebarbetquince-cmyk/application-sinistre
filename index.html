@@ -3258,9 +3258,9 @@ function buildRlCard(r){
       <span class="rc-who">→ ${r.responsable.split(' ')[0]}</span>
     </div>
     <div class="rc-actions">
-      <button class="rc-btn" onclick="event.stopPropagation();editRelance(${r.id})">✏ Modifier</button>
-      ${r.statut!=='Terminé'?`<button class="rc-btn done-btn" onclick="event.stopPropagation();closeRelance(${r.id})">✓ Clôturer</button>`:''}
-      <button class="rc-btn" onclick="event.stopPropagation();deleteRelance(${r.id})" style="color:var(--red);">✕</button>
+      <button class="rc-btn" onclick="event.stopPropagation();editRelance('${r.id}')">✏ Modifier</button>
+      ${r.statut!=='Terminé'?`<button class="rc-btn done-btn" onclick="event.stopPropagation();closeRelance('${r.id}')">✓ Clôturer</button>`:''}
+      <button class="rc-btn" onclick="event.stopPropagation();deleteRelance('${r.id}')" style="color:var(--red);">✕</button>
     </div>
   </div>`;
 }
@@ -3341,7 +3341,8 @@ function saveRelance(){
   if(!titre){showNotif('Le titre est obligatoire.');return;}
   const echeance=document.getElementById('rl-echeance').value;
   if(!echeance){showNotif('La date d\'échéance est obligatoire.');return;}
-  const existing=rlEditId?RELANCES.find(x=>x.id===rlEditId):null;
+  // eslint-disable-next-line eqeqeq
+  const existing=rlEditId?RELANCES.find(x=>x.id==rlEditId):null;
   const r={
     id:rlEditId||Date.now(),
     titre,type:document.getElementById('rl-type').value,
@@ -3354,7 +3355,8 @@ function saveRelance(){
     creeLe:existing?existing.creeLe:new Date().toLocaleDateString('fr-FR'),
     creePar:existing?existing.creePar:currentUser?.name||'—',
   };
-  if(rlEditId){const i=RELANCES.findIndex(x=>x.id===rlEditId);if(i>=0)RELANCES[i]=r;if(window._sb)sbSaveRelance(r);}
+  // eslint-disable-next-line eqeqeq
+  if(rlEditId){const i=RELANCES.findIndex(x=>x.id==rlEditId);if(i>=0)RELANCES[i]=r;if(window._sb)sbSaveRelance(r);}
   else{
     RELANCES.unshift(r);
     if(r.archive&&SINISTRE_ACTIVITY){
@@ -3371,7 +3373,8 @@ function saveRelance(){
 }
 
 function editRelance(id){
-  rlEditId=id;const r=RELANCES.find(x=>x.id===id);if(!r)return;
+  // eslint-disable-next-line eqeqeq
+  rlEditId=id;const r=RELANCES.find(x=>x.id==id);if(!r)return;
   document.getElementById('rl-modal-title').textContent='Modifier la relance';
   document.getElementById('rl-titre').value=r.titre;
   document.getElementById('rl-type').value=r.type;
@@ -3388,7 +3391,8 @@ function editRelance(id){
 }
 
 function closeRelance(id){
-  const r=RELANCES.find(x=>x.id===id);if(!r)return;
+  // eslint-disable-next-line eqeqeq
+  const r=RELANCES.find(x=>x.id==id);if(!r)return;
   r.statut='Terminé';
   if(window._sb)sbSaveRelance(r);
   if(r.archive&&SINISTRE_ACTIVITY){
@@ -3404,7 +3408,8 @@ function closeRelance(id){
 
 function deleteRelance(id){
   if(!confirm('Supprimer cette relance ?'))return;
-  const i=RELANCES.findIndex(x=>x.id===id);if(i>=0)RELANCES.splice(i,1);
+  // eslint-disable-next-line eqeqeq
+  const i=RELANCES.findIndex(x=>x.id==id);if(i>=0)RELANCES.splice(i,1);
   renderRelances();showNotif('Relance supprimée.');
 }
 
@@ -3758,8 +3763,8 @@ function renderDpRelances(archive){
         ${r.desc?`<div style="font-size:11px;color:var(--text3);margin-top:4px;line-height:1.4;">${r.desc}</div>`:""}
       </div>
       <div class="dp-rl-right">
-        <button class="rc-btn" onclick="editRelance(${r.id});event.stopPropagation();" style="font-size:10px;padding:3px 7px;">✏</button>
-        ${r.statut!=="Terminé"?`<button class="rc-btn done-btn" onclick="closeRelance(${r.id});renderDpRelances('${archive}');event.stopPropagation();" style="font-size:10px;padding:3px 7px;">✓</button>`:""}
+        <button class="rc-btn" onclick="editRelance('${r.id}');event.stopPropagation();" style="font-size:10px;padding:3px 7px;">✏</button>
+        ${r.statut!=="Terminé"?`<button class="rc-btn done-btn" onclick="closeRelance('${r.id}');renderDpRelances('${archive}');event.stopPropagation();" style="font-size:10px;padding:3px 7px;">✓</button>`:""}
       </div>
     </div>`;
   }).join("");
